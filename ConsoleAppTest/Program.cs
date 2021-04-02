@@ -27,6 +27,7 @@ namespace ConsoleAppTest
 
             // var openOrders = binanceClient.GetCurrentOpenOrders("grtusdt").Result;
 
+
             string path = AppDomain.CurrentDomain.BaseDirectory + "\\Logs";
 
             if (!Directory.Exists(path))
