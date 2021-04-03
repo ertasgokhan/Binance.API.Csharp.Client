@@ -12,7 +12,7 @@ namespace ConsoleAppTest
 
         static void Main(string[] args)
         {
-            var apiClient = new ApiClient("0TPObF0mhuHl8KRwpvAzuLaJ72l7kwooA2Sf138ePrbGLqQs7YoyBdf7hqsmsoJj", "QC9s5dc8cA7uQFt83P4OJLqxTDU2TGB9d4McN1rYv5FBSBtJrIdLJv4s47zRoVBv");
+            var apiClient = new ApiClient("srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej", "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj");
             var binanceClient = new BinanceClient(apiClient);
             string symbol = "grtusdt";
             IEnumerable<Candlestick> candlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddDays(-90), DateTime.Now).Result;
