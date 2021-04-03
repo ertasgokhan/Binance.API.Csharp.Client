@@ -4,6 +4,7 @@ using Binance.API.Csharp.Client.Models.Market;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
@@ -19,8 +20,8 @@ namespace ConsoleAppTest
             string symbol = "grtusdt";
             int Length = 60;
             decimal Percent = 5;
-            int Limit = 500;
-            IEnumerable<Candlestick> candlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddDays(-90), DateTime.Now, Limit).Result;
+            int Limit = 3000;
+            IEnumerable<Candlestick> candlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddDays(-180), DateTime.Now, Limit).Result;
             // var tickerPrices = binanceClient.GetAllPrices().Result; //anlık fi,yat
 
             //var accountInfo = binanceClient.GetAccountInfo().Result; //245832971 , 245835795,245839630
@@ -43,14 +44,14 @@ namespace ConsoleAppTest
             string filepath = AppDomain.CurrentDomain.BaseDirectory + "\\Logs\\" + symbol + ".txt";
             string OTT = string.Empty;
 
-            foreach (var item in candlestick)
-            {
+            //foreach (var item in candlestick)
+            //{
                 if (!File.Exists(filepath))
                 {
                     using (StreamWriter sw = File.CreateText(filepath))
                     {
                         OTT = ReturnOTT(candlestick, Length, Percent);
-                        //sw.WriteLine(String.Format("{0};{1};{2};{3};{4};{5}", item.OpenDateTime, item.Open, item.High, item.Low, item.Close, OTT));
+                        sw.WriteLine(OTT);
                     }
                 }
                 else
@@ -58,10 +59,10 @@ namespace ConsoleAppTest
                     using (StreamWriter sw = File.AppendText(filepath))
                     {
                         OTT = ReturnOTT(candlestick, Length, Percent);
-                        //sw.WriteLine(String.Format("{0};{1};{2};{3};{4};{5}", item.OpenDateTime, item.Open, item.High, item.Low, item.Close, OTT));
+                        sw.WriteLine(OTT);
                     }
                 }
-            }
+            //}
         }
 
         public static string ReturnOTT(IEnumerable<Candlestick> candlestick, int length, decimal percent)
@@ -74,7 +75,7 @@ namespace ConsoleAppTest
             bool BuySignal = false;
             bool SellSignal = false;
             int runTimePeriod = candlestick.Count(); // 500
-            decimal valpha = 2 / (length + 1);
+            decimal valpha = (decimal)2 / (length + 1);
 
             for (int i = 0; i < runTimePeriod; i++)
             {
@@ -98,7 +99,7 @@ namespace ConsoleAppTest
                     BuySignal = false;
                     SellSignal = false;
 
-                    OTTValues = String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, 0, 0, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
+                    OTTValues = String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, Calculate(CandlestickArr[i].Open), Calculate(CandlestickArr[i].High), Calculate(CandlestickArr[i].Low), Calculate(CandlestickArr[i].Close), 0, 0, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
                 }
                 else
                 {
@@ -190,7 +191,7 @@ namespace ConsoleAppTest
                             SellSignal = false;
                     }
 
-                    OTTValues = OTTValues + "\n" + String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, OTTArr[i].SupportLine, OTTArr[i].OTTLine, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
+                    OTTValues = OTTValues + "\n" + String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, Calculate(CandlestickArr[i].Open), Calculate(CandlestickArr[i].High), Calculate(CandlestickArr[i].Low), Calculate(CandlestickArr[i].Close), OTTArr[i].SupportLine, OTTArr[i].OTTLine, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
                 }
             }
 
@@ -224,7 +225,10 @@ namespace ConsoleAppTest
             }
         }
 
-
+        public static decimal Calculate(decimal val)
+        {
+            return (decimal)val / 100000000;
+        }
     }
 }
 
