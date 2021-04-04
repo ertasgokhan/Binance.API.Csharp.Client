@@ -2,12 +2,9 @@
 using Binance.API.Csharp.Client.Models.Enums;
 using Binance.API.Csharp.Client.Models.Market;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 
 namespace ConsoleAppTest
 {
@@ -17,11 +14,12 @@ namespace ConsoleAppTest
         {
             var apiClient = new ApiClient("srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej", "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj");
             var binanceClient = new BinanceClient(apiClient);
-            string symbol = "grtusdt";
+            string symbol = "adausdt";
             int Length = 60;
             decimal Percent = 5;
-            int Limit = 3000;
-            IEnumerable<Candlestick> candlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddDays(-180), DateTime.Now, Limit).Result;
+            int Limit = 5000;
+            IEnumerable<Candlestick> candlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddDays(-365), DateTime.Now, Limit).Result;
+            
             // var tickerPrices = binanceClient.GetAllPrices().Result; //anlık fi,yat
 
             //var accountInfo = binanceClient.GetAccountInfo().Result; //245832971 , 245835795,245839630
@@ -99,7 +97,7 @@ namespace ConsoleAppTest
                     BuySignal = false;
                     SellSignal = false;
 
-                    OTTValues = String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, Calculate(CandlestickArr[i].Open), Calculate(CandlestickArr[i].High), Calculate(CandlestickArr[i].Low), Calculate(CandlestickArr[i].Close), 0, 0, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
+                    OTTValues = String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, 0, 0, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
                 }
                 else
                 {
@@ -191,7 +189,7 @@ namespace ConsoleAppTest
                             SellSignal = false;
                     }
 
-                    OTTValues = OTTValues + "\n" + String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, Calculate(CandlestickArr[i].Open), Calculate(CandlestickArr[i].High), Calculate(CandlestickArr[i].Low), Calculate(CandlestickArr[i].Close), OTTArr[i].SupportLine, OTTArr[i].OTTLine, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
+                    OTTValues = OTTValues + "\n" + String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, OTTArr[i].SupportLine, OTTArr[i].OTTLine, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
                 }
             }
 
@@ -223,11 +221,6 @@ namespace ConsoleAppTest
                     sw.WriteLine(Message);
                 }
             }
-        }
-
-        public static decimal Calculate(decimal val)
-        {
-            return (decimal)val / 100000000;
         }
     }
 }

@@ -69,10 +69,10 @@ namespace Binance.API.Csharp.Client.Utils
 				Candlestick val2 = new Candlestick()
 				{
 					OpenTime = long.Parse(val[0].ToString()),
-					Open = Decimal.Parse(val[1].ToString()),
-					High = Decimal.Parse(val[2].ToString()),
-					Low = Decimal.Parse(val[3].ToString()),
-					Close = Decimal.Parse(val[4].ToString()),
+					Open = (decimal)(Decimal.Parse(val[1].ToString()) / 100000000),
+					High = (decimal)(Decimal.Parse(val[2].ToString()) / 100000000),
+					Low = (decimal)(Decimal.Parse(val[3].ToString()) / 100000000),
+					Close = (decimal)(Decimal.Parse(val[4].ToString()) / 100000000),
 					Volume = Decimal.Parse(val[5].ToString()),
 					CloseTime = long.Parse(val[6].ToString()),
 					QuoteAssetVolume = Decimal.Parse(val[7].ToString()),
