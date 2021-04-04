@@ -2,7 +2,9 @@
 using Binance.API.Csharp.Client.Models.Enums;
 using Binance.API.Csharp.Client.Models.Market;
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -14,24 +16,10 @@ namespace ConsoleAppTest
         {
             var apiClient = new ApiClient("srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej", "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj");
             var binanceClient = new BinanceClient(apiClient);
-            string symbol = "adausdt";
+            string symbol = "grtusdt";
             int Length = 60;
             decimal Percent = 5;
-            int Limit = 5000;
-            IEnumerable<Candlestick> candlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddDays(-365), DateTime.Now, Limit).Result;
-            
-            // var tickerPrices = binanceClient.GetAllPrices().Result; //anlık fi,yat
-
-            //var accountInfo = binanceClient.GetAccountInfo().Result; //245832971 , 245835795,245839630
-
-            //      var buyOrder = binanceClient.PostNewOrder("GRTUSDT", (decimal)11, (decimal)1, OrderSide.BUY).Result;
-
-            //  var sellOrder = binanceClient.PostNewOrder("GRTUSDT", (decimal)8.7, (decimal)1.3676, OrderSide.SELL).Result;
-            // var canceledOrder = binanceClient.CancelOrder("grtusdt", 245839630).Result;
-
-            // var openOrders = binanceClient.GetCurrentOpenOrders("grtusdt").Result;
-
-
+            int Limit = 1000;
             string path = AppDomain.CurrentDomain.BaseDirectory + "\\Logs";
 
             if (!Directory.Exists(path))
@@ -40,30 +28,35 @@ namespace ConsoleAppTest
             }
 
             string filepath = AppDomain.CurrentDomain.BaseDirectory + "\\Logs\\" + symbol + ".txt";
-            string OTT = string.Empty;
+            string OTTLines = string.Empty;
+            List<Candlestick> candlestick = new List<Candlestick>();
+            List<Candlestick> tempCandlestick = new List<Candlestick>();
 
-            //foreach (var item in candlestick)
-            //{
-                if (!File.Exists(filepath))
-                {
-                    using (StreamWriter sw = File.CreateText(filepath))
-                    {
-                        OTT = ReturnOTT(candlestick, Length, Percent);
-                        sw.WriteLine(OTT);
-                    }
-                }
-                else
-                {
-                    using (StreamWriter sw = File.AppendText(filepath))
-                    {
-                        OTT = ReturnOTT(candlestick, Length, Percent);
-                        sw.WriteLine(OTT);
-                    }
-                }
-            //}
+            //Console.WriteLine(DateTime.Now.Hour + " " + DateTime.Now.Minute + " " + DateTime.Now.Second + " " + DateTime.Now.Millisecond);
+
+            for (int i = -48; i < 0; i++)
+            {
+                tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddMonths(i), DateTime.Now.AddMonths(i + 1), Limit).Result.ToList();
+
+                if (tempCandlestick != null && tempCandlestick.Count() > 0)
+                    candlestick.AddRange(tempCandlestick);
+            }
+
+            if (File.Exists(filepath))
+                File.Delete(filepath);
+
+            using (StreamWriter sw = File.CreateText(filepath))
+            {
+                OTTLines = ReturnOTT(candlestick, Length, Percent);
+                sw.WriteLine(OTTLines);
+            }
+
+            //Console.WriteLine(DateTime.Now.Hour + " " + DateTime.Now.Minute + " " + DateTime.Now.Second + " " + DateTime.Now.Millisecond);
+
+            //Console.ReadLine();
         }
 
-        public static string ReturnOTT(IEnumerable<Candlestick> candlestick, int length, decimal percent)
+        public static string ReturnOTT(List<Candlestick> candlestick, int length, decimal percent)
         {
             string OTTValues = string.Empty;
 
@@ -125,7 +118,7 @@ namespace ConsoleAppTest
                         OTTArr[i].vUD = 0;
                         OTTArr[i].vDD = 0;
 
-                        for (int j = 0; j < 8; j++)
+                        for (int j = 0; j <= 8; j++)
                         {
                             OTTArr[i].vUD = OTTArr[i].vUD + OTTArr[i - j].vud1;
                             OTTArr[i].vDD = OTTArr[i].vDD + OTTArr[i - j].vdd1;
@@ -137,7 +130,7 @@ namespace ConsoleAppTest
                     else
                         OTTArr[i].vCMO = 0;
 
-                    OTTArr[i].VAR = (valpha * Math.Abs(OTTArr[i].vCMO) * CandlestickArr[i].Close) + (1 - valpha * Math.Abs(OTTArr[i].vCMO)) * OTTArr[i - 1].VAR;
+                    OTTArr[i].VAR = (decimal)((decimal)(valpha * Math.Abs(OTTArr[i].vCMO) * CandlestickArr[i].Close) + (decimal)(1 - valpha * Math.Abs(OTTArr[i].vCMO)) * OTTArr[i - 1].VAR);
                     OTTArr[i].difference = OTTArr[i].VAR * percent * 0.01M;
                     OTTArr[i].longstop = OTTArr[i].VAR - OTTArr[i].difference;
                     OTTArr[i].longstopPrev = OTTArr[i - 1].longstop;
@@ -148,7 +141,7 @@ namespace ConsoleAppTest
                     OTTArr[i].shortstop = OTTArr[i].VAR + OTTArr[i].difference;
                     OTTArr[i].shortstopPrev = OTTArr[i - 1].shortstop;
 
-                    if (OTTArr[i].VAR < OTTArr[i].shortstopPrev && OTTArr[i].shortstop < OTTArr[i].shortstopPrev)
+                    if (OTTArr[i].VAR < OTTArr[i].shortstopPrev && OTTArr[i].shortstop > OTTArr[i].shortstopPrev)
                         OTTArr[i].shortstop = OTTArr[i].shortstopPrev;
 
                     OTTArr[i].dir = OTTArr[i - 1].dir;
@@ -169,9 +162,9 @@ namespace ConsoleAppTest
                     else
                     {
                         if ((OTTArr[i].VAR > OTTArr[i].MT))
-                            OTTArr[i].OTTLine = OTTArr[i - 2].MT * (200 + percent) / 200;
+                            OTTArr[i].OTTLine = (decimal)((OTTArr[i - 2].MT) * (decimal)((200 + percent) / 200));
                         else
-                            OTTArr[i].OTTLine = OTTArr[i - 2].MT * (200 - percent) / 200;
+                            OTTArr[i].OTTLine = (decimal)((OTTArr[i - 2].MT) * (decimal)((200 - percent) / 200));
                     }
 
                     OTTArr[i].SupportLine = OTTArr[i].VAR;
@@ -225,3 +218,13 @@ namespace ConsoleAppTest
     }
 }
 
+// var tickerPrices = binanceClient.GetAllPrices().Result; //anlık fi,yat
+
+//var accountInfo = binanceClient.GetAccountInfo().Result; //245832971 , 245835795,245839630
+
+//      var buyOrder = binanceClient.PostNewOrder("GRTUSDT", (decimal)11, (decimal)1, OrderSide.BUY).Result;
+
+//  var sellOrder = binanceClient.PostNewOrder("GRTUSDT", (decimal)8.7, (decimal)1.3676, OrderSide.SELL).Result;
+// var canceledOrder = binanceClient.CancelOrder("grtusdt", 245839630).Result;
+
+// var openOrders = binanceClient.GetCurrentOpenOrders("grtusdt").Result;
