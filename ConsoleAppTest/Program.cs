@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ConsoleAppTest
 {
@@ -22,8 +24,9 @@ namespace ConsoleAppTest
             DateTime startTime = DateTime.Now;
             List<Symbol> symbolsList = readSymbols();
             foreach (var item in symbolsList)
+            {
                 GetForOnePair(item);
-
+            }
             DateTime endTime = DateTime.Now;
 
             TimeSpan span = endTime.Subtract(startTime);
@@ -81,6 +84,10 @@ namespace ConsoleAppTest
                 OTTLines = ReturnOTT(candlestick, Length, Percent);
                 sw.WriteLine(OTTLines);
             }
+
+            //Console.WriteLine(DateTime.Now.Hour + " " + DateTime.Now.Minute + " " + DateTime.Now.Second + " " + DateTime.Now.Millisecond);
+
+            //Console.ReadLine();
         }
 
         public static string ReturnOTT(List<Candlestick> candlestick, int length, decimal percent)
