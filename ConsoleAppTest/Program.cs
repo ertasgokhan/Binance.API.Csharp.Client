@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ConsoleAppTest
 {
@@ -14,16 +16,18 @@ namespace ConsoleAppTest
     {
         static void Main(string[] args)
         {
-            DateTime startTime = DateTime.Now;           
+            DateTime startTime = DateTime.Now;
             List<Symbol> symbolsList = readSymbols();
-            foreach (var item in symbolsList)
+
+            Parallel.ForEach(symbolsList, item =>
             {
                 GetForOnePair(item);
-            }
+            });
+
             DateTime endTime = DateTime.Now;
 
             TimeSpan span = endTime.Subtract(startTime);
-            Console.WriteLine("Time Difference {0}:{1}:{2} ", span.Hours,span.Minutes,span.Seconds);
+            Console.WriteLine("Time Difference {0}:{1}:{2} ", span.Hours, span.Minutes, span.Seconds);
             Console.ReadLine();
         }
 
@@ -90,6 +94,7 @@ namespace ConsoleAppTest
             //Console.WriteLine(DateTime.Now.Hour + " " + DateTime.Now.Minute + " " + DateTime.Now.Second + " " + DateTime.Now.Millisecond);
 
             //Console.ReadLine();
+
         }
 
         public static string ReturnOTT(List<Candlestick> candlestick, int length, decimal percent)
