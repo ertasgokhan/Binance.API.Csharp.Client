@@ -18,13 +18,19 @@ namespace Binance.Generate.OTT
 
         public static void GenerateOTT()
         {
-            DateTime startTime = DateTime.Now;
-            List<Symbol> symbolsList = readSymbols();
-
-            Parallel.ForEach(symbolsList, item =>
+            try
             {
-                GetForOnePair(item);
-            });
+                List<Symbol> symbolsList = readSymbols();
+
+                Parallel.ForEach(symbolsList, item =>
+                {
+                    GetForOnePair(item);
+                });
+            }
+            catch (Exception ex)
+            {
+                WriteLog(ex.Message);
+            }
         }
 
         public static List<Symbol> readSymbols()
@@ -212,6 +218,26 @@ namespace Binance.Generate.OTT
             }
 
             return OTTValues;
+        }
+
+        public static void WriteLog(string LogMessage)
+        {
+            string filepath = sourceDirectory + "\\Log.txt";
+
+            if (!File.Exists(filepath))
+            {
+                using (StreamWriter sw = File.CreateText(filepath))
+                {
+                    sw.WriteLine(LogMessage);
+                }
+            }
+            else
+            {
+                using (StreamWriter sw = File.AppendText(filepath))
+                {
+                    sw.WriteLine(LogMessage);
+                }
+            }
         }
     }
 }
