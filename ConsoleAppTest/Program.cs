@@ -12,25 +12,29 @@ namespace ConsoleAppTest
 {
     class Program
     {
+        public const string sourceDirectory = @"C:\BinanceBot\";
+        public const string apiKey = "srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej";
+        public const string apiSecret = "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj";
+        public const int limit = 1000;
+
         static void Main(string[] args)
         {
-            DateTime startTime = DateTime.Now;           
+            DateTime startTime = DateTime.Now;
             List<Symbol> symbolsList = readSymbols();
             foreach (var item in symbolsList)
-            {
                 GetForOnePair(item);
-            }
+
             DateTime endTime = DateTime.Now;
 
             TimeSpan span = endTime.Subtract(startTime);
-            Console.WriteLine("Time Difference {0}:{1}:{2} ", span.Hours,span.Minutes,span.Seconds);
+            Console.WriteLine("Time Difference {0}:{1}:{2} ", span.Hours, span.Minutes, span.Seconds);
             Console.ReadLine();
         }
 
         public static List<Symbol> readSymbols()
         {
             List<Symbol> symbolsList = new List<Symbol>();
-            string filepath = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\Manage\\symbols.txt";
+            string filepath = sourceDirectory + "symbols.txt";
 
             using (StreamReader rd = File.OpenText(filepath))
             {
@@ -50,29 +54,20 @@ namespace ConsoleAppTest
 
         public static void GetForOnePair(Symbol symbolItem)
         {
-            var apiClient = new ApiClient("srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej", "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj");
+            var apiClient = new ApiClient(apiKey, apiSecret);
             var binanceClient = new BinanceClient(apiClient);
             string symbol = symbolItem.symbol;
             int Length = symbolItem.length;
             decimal Percent = symbolItem.percent;
-            int Limit = 1000;
-            string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\Manage";
 
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-
-            string filepath = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\Manage\\" + symbol + ".txt";
+            string filepath = sourceDirectory + symbol + ".txt";
             string OTTLines = string.Empty;
             List<Candlestick> candlestick = new List<Candlestick>();
             List<Candlestick> tempCandlestick = new List<Candlestick>();
 
-            //Console.WriteLine(DateTime.Now.Hour + " " + DateTime.Now.Minute + " " + DateTime.Now.Second + " " + DateTime.Now.Millisecond);
-
             for (int i = -48; i < 0; i++)
             {
-                tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddMonths(i), DateTime.Now.AddMonths(i + 1), Limit).Result.ToList();
+                tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddMonths(i), DateTime.Now.AddMonths(i + 1), limit).Result.ToList();
 
                 if (tempCandlestick != null && tempCandlestick.Count() > 0)
                     candlestick.AddRange(tempCandlestick);
@@ -86,10 +81,6 @@ namespace ConsoleAppTest
                 OTTLines = ReturnOTT(candlestick, Length, Percent);
                 sw.WriteLine(OTTLines);
             }
-
-            //Console.WriteLine(DateTime.Now.Hour + " " + DateTime.Now.Minute + " " + DateTime.Now.Second + " " + DateTime.Now.Millisecond);
-
-            //Console.ReadLine();
         }
 
         public static string ReturnOTT(List<Candlestick> candlestick, int length, decimal percent)
@@ -224,43 +215,5 @@ namespace ConsoleAppTest
 
             return OTTValues;
         }
-
-        public void WriteToFile(string Message)
-        {
-            string path = AppDomain.CurrentDomain.BaseDirectory + "\\Logs";
-
-            if (!Directory.Exists(path))
-            {
-                Directory.CreateDirectory(path);
-            }
-
-            string filepath = AppDomain.CurrentDomain.BaseDirectory + "\\Logs\\ServiceLog_" + DateTime.Now.Date.ToShortDateString().Replace('/', '_') + ".txt";
-
-            if (!File.Exists(filepath))
-            {
-                using (StreamWriter sw = File.CreateText(filepath))
-                {
-                    sw.WriteLine(Message);
-                }
-            }
-            else
-            {
-                using (StreamWriter sw = File.AppendText(filepath))
-                {
-                    sw.WriteLine(Message);
-                }
-            }
-        }
     }
 }
-
-// var tickerPrices = binanceClient.GetAllPrices().Result; //anlık fi,yat
-
-//var accountInfo = binanceClient.GetAccountInfo().Result; //245832971 , 245835795,245839630
-
-//      var buyOrder = binanceClient.PostNewOrder("GRTUSDT", (decimal)11, (decimal)1, OrderSide.BUY).Result;
-
-//  var sellOrder = binanceClient.PostNewOrder("GRTUSDT", (decimal)8.7, (decimal)1.3676, OrderSide.SELL).Result;
-// var canceledOrder = binanceClient.CancelOrder("grtusdt", 245839630).Result;
-
-// var openOrders = binanceClient.GetCurrentOpenOrders("grtusdt").Result;
