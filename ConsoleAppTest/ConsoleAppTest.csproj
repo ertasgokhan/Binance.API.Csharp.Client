@@ -53,27 +53,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="OTT.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Symbol.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Binance.API.Csharp.Client.Domain\Binance.API.Csharp.Client.Domain.csproj">
-      <Project>{187005DA-3BDB-4F15-AB05-DED21A8D1CB0}</Project>
-      <Name>Binance.API.Csharp.Client.Domain</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Binance.API.Csharp.Client.Models\Binance.API.Csharp.Client.Models.csproj">
-      <Project>{6AC4E50B-D8D3-45FA-8DC3-05B8B22E7D4B}</Project>
-      <Name>Binance.API.Csharp.Client.Models</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Binance.API.Csharp.Client\Binance.API.Csharp.Client.csproj">
-      <Project>{18ca9282-6d84-4096-8621-d7bc6a41ee4e}</Project>
-      <Name>Binance.API.Csharp.Client</Name>
+    <ProjectReference Include="..\Binance.Generate.OTT\Binance.Generate.OTT.csproj">
+      <Project>{1bd14904-dcb1-437e-9244-3e87e858879c}</Project>
+      <Name>Binance.Generate.OTT</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ConsoleAppTest
+namespace Binance.Generate.OTT
 {
     public class OTT
     {

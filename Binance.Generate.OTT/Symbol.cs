@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ConsoleAppTest
+namespace Binance.Generate.OTT
 {
     public class Symbol
     {
