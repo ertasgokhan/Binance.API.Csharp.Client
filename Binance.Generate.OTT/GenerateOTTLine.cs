@@ -18,18 +18,11 @@ namespace Binance.Generate.OTT
 
         public static void GenerateOTT()
         {
-            try
-            {
-                List<Symbol> symbolsList = readSymbols();
+            List<Symbol> symbolsList = readSymbols();
 
-                Parallel.ForEach(symbolsList, item =>
-                {
-                    GetForOnePair(item);
-                });
-            }
-            catch (Exception ex)
+            foreach (var item in symbolsList)
             {
-                WriteLog(ex.Message);
+                GetForOnePair(item);
             }
         }
 
@@ -56,32 +49,39 @@ namespace Binance.Generate.OTT
 
         public static void GetForOnePair(Symbol symbolItem)
         {
-            var apiClient = new ApiClient(apiKey, apiSecret);
-            var binanceClient = new BinanceClient(apiClient);
-            string symbol = symbolItem.symbol;
-            int Length = symbolItem.length;
-            decimal Percent = symbolItem.percent;
-
-            string filepath = sourceDirectory + symbol + ".txt";
-            string OTTLines = string.Empty;
-            List<Candlestick> candlestick = new List<Candlestick>();
-            List<Candlestick> tempCandlestick = new List<Candlestick>();
-
-            for (int i = -24; i < 0; i++)
+            try
             {
-                tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddMonths(i), DateTime.Now.AddMonths(i + 1), limit).Result.ToList();
+                var apiClient = new ApiClient(apiKey, apiSecret);
+                var binanceClient = new BinanceClient(apiClient);
+                string symbol = symbolItem.symbol;
+                int Length = symbolItem.length;
+                decimal Percent = symbolItem.percent;
 
-                if (tempCandlestick != null && tempCandlestick.Count() > 0)
-                    candlestick.AddRange(tempCandlestick);
+                string filepath = sourceDirectory + symbol + ".txt";
+                string OTTLines = string.Empty;
+                List<Candlestick> candlestick = new List<Candlestick>();
+                List<Candlestick> tempCandlestick = new List<Candlestick>();
+
+                for (int i = -24; i < 0; i++)
+                {
+                    tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddMonths(i), DateTime.Now.AddMonths(i + 1), limit).Result.ToList();
+
+                    if (tempCandlestick != null && tempCandlestick.Count() > 0)
+                        candlestick.AddRange(tempCandlestick);
+                }
+
+                if (File.Exists(filepath))
+                    File.Delete(filepath);
+
+                using (StreamWriter sw = File.CreateText(filepath))
+                {
+                    OTTLines = ReturnOTT(candlestick, Length, Percent);
+                    sw.WriteLine(OTTLines);
+                }
             }
-
-            if (File.Exists(filepath))
-                File.Delete(filepath);
-
-            using (StreamWriter sw = File.CreateText(filepath))
+            catch (Exception ex)
             {
-                OTTLines = ReturnOTT(candlestick, Length, Percent);
-                sw.WriteLine(OTTLines);
+                WriteLog(ex.Message);
             }
         }
 
