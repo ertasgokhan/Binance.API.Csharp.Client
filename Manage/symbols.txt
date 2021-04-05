@@ -1,0 +1,7 @@
+grtusdt;60;5
+adausdt;60;5
+ksmusdt;60;5
+ltcusdt;60;5
+avaxusdt;60;5
+dotusdt;60;5
+dashusdt;60;5

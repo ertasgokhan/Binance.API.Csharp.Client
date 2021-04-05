@@ -14,20 +14,56 @@ namespace ConsoleAppTest
     {
         static void Main(string[] args)
         {
+            DateTime startTime = DateTime.Now;           
+            List<Symbol> symbolsList = readSymbols();
+            foreach (var item in symbolsList)
+            {
+                GetForOnePair(item);
+            }
+            DateTime endTime = DateTime.Now;
+
+            TimeSpan span = endTime.Subtract(startTime);
+            Console.WriteLine("Time Difference {0}:{1}:{2} ", span.Hours,span.Minutes,span.Seconds);
+            Console.ReadLine();
+        }
+
+        public static List<Symbol> readSymbols()
+        {
+            List<Symbol> symbolsList = new List<Symbol>();
+            string filepath = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\Manage\\symbols.txt";
+
+            using (StreamReader rd = File.OpenText(filepath))
+            {
+                while (!rd.EndOfStream)
+                {
+                    Symbol tmp = new Symbol();
+                    string str = rd.ReadLine();
+                    tmp.symbol = str.Split(';')[0];
+                    tmp.length = int.Parse(str.Split(';')[1]);
+                    tmp.percent = Decimal.Parse(str.Split(';')[2]);
+                    symbolsList.Add(tmp);
+                }
+            }
+
+            return symbolsList;
+        }
+
+        public static void GetForOnePair(Symbol symbolItem)
+        {
             var apiClient = new ApiClient("srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej", "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj");
             var binanceClient = new BinanceClient(apiClient);
-            string symbol = "grtusdt";
-            int Length = 60;
-            decimal Percent = 5;
+            string symbol = symbolItem.symbol;
+            int Length = symbolItem.length;
+            decimal Percent = symbolItem.percent;
             int Limit = 1000;
-            string path = AppDomain.CurrentDomain.BaseDirectory + "\\Logs";
+            string path = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\Manage";
 
             if (!Directory.Exists(path))
             {
                 Directory.CreateDirectory(path);
             }
 
-            string filepath = AppDomain.CurrentDomain.BaseDirectory + "\\Logs\\" + symbol + ".txt";
+            string filepath = Directory.GetParent(System.IO.Directory.GetCurrentDirectory()).Parent.Parent.FullName + "\\Manage\\" + symbol + ".txt";
             string OTTLines = string.Empty;
             List<Candlestick> candlestick = new List<Candlestick>();
             List<Candlestick> tempCandlestick = new List<Candlestick>();
