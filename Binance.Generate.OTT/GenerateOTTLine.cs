@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
 using System.Threading.Tasks;
 
 namespace Binance.Generate.OTT
@@ -78,6 +80,8 @@ namespace Binance.Generate.OTT
                     OTTLines = ReturnOTT(candlestick, Length, Percent);
                     sw.WriteLine(OTTLines);
                 }
+
+                SendEmail(symbol);
             }
             catch (Exception ex)
             {
@@ -237,6 +241,52 @@ namespace Binance.Generate.OTT
                 {
                     sw.WriteLine(LogMessage);
                 }
+            }
+        }
+
+        public static void SendEmail(string symbol)
+        {
+            string toAddress = "";
+            string fromPassword = "";
+            string filepath = sourceDirectory + "emails.txt";
+            string filepath2 = sourceDirectory + "emailsPass.txt";
+
+            using (StreamReader rd = File.OpenText(filepath))
+            {
+                while (!rd.EndOfStream)
+                {
+                    toAddress = rd.ReadLine();
+                }
+            }
+
+            using (StreamReader rd = File.OpenText(filepath2))
+            {
+                while (!rd.EndOfStream)
+                {
+                    fromPassword = rd.ReadLine();
+                }
+            }
+
+            string fromAddress = "definexbinance@gmail.com";
+            string subject = symbol + " mum verileri hakkında";
+            string body = DateTime.Now + " tarihinde " + symbol + " için mum verileri başarıyla çekilmiştir.";
+
+            var smtp = new SmtpClient
+            {
+                Host = "smtp.gmail.com",
+                Port = 587,
+                EnableSsl = true,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(fromAddress, fromPassword)
+            };
+            using (var message = new MailMessage(fromAddress, toAddress)
+            {
+                Subject = subject,
+                Body = body
+            })
+            {
+                smtp.Send(message);
             }
         }
     }
