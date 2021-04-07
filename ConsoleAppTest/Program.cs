@@ -1,4 +1,4 @@
-﻿using Binance.Generate.OTT;
+﻿using Binance.OTT.Trade;
 using System;
 
 namespace ConsoleAppTest
@@ -9,7 +9,7 @@ namespace ConsoleAppTest
         {
             DateTime startTime = DateTime.Now;
 
-            GenerateOTTLine.GenerateOTT();
+            BinanceTrade.Trade();
 
             DateTime endTime = DateTime.Now;
 
