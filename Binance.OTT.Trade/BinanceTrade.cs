@@ -35,7 +35,8 @@ namespace Binance.OTT.Trade
                     tmp.buyTrendSwitch = str.Split(';')[5] == "0" ? false : true;
                     tmp.buyTrendRatio = Decimal.Parse(str.Split(';')[6]);
                     tmp.sellTrendRatio = Decimal.Parse(str.Split(';')[7]);
-                    tmp.symbolCoin = str.Split(';')[8];
+                    tmp.depositRatio = int.Parse(str.Split(';')[8]);
+                    tmp.symbolCoin = str.Split(';')[9];
                     symbolsList.Add(tmp);
                 }
             }
@@ -151,20 +152,27 @@ namespace Binance.OTT.Trade
             return myOpenOrders;
         }
 
-        private static List<Order> getLastSellTrades(List<Symbol> symbols)
+        private static List<Order> getLastTrades(List<Symbol> symbols)
         {
             var apiClient = new ApiClient(apiKey, apiSecret);
             var binanceClient = new BinanceClient(apiClient);
             List<Binance.API.Csharp.Client.Models.Account.Trade> myLastTrades = new List<API.Csharp.Client.Models.Account.Trade>();
             List<Order> myCurrentOrder = new List<Order>();
             List<Order> myLastFilledOrders = new List<Order>();
+            Order myLastOrder = new Order();
 
             foreach (var item in symbols)
             {
+                myLastOrder = new Order();
                 myCurrentOrder = binanceClient.GetAllOrders(item.symbol).Result.ToList();
 
-                if (myCurrentOrder != null && myCurrentOrder.Count() > 0 && myCurrentOrder[myCurrentOrder.Count - 1].Side == "SELL" && myCurrentOrder[myCurrentOrder.Count - 1].Status == "FILLED")
-                    myLastFilledOrders.Add(myCurrentOrder[myCurrentOrder.Count - 1]);
+                if (myCurrentOrder != null && myCurrentOrder.Count() > 0)
+                {
+                    myLastOrder = myCurrentOrder.Last(i => i.Status == "FILLED");
+
+                    if (myLastOrder != null)
+                        myLastFilledOrders.Add(myLastOrder);
+                }
             }
 
             return myLastFilledOrders;
@@ -174,9 +182,7 @@ namespace Binance.OTT.Trade
         {
             var apiClient = new ApiClient(apiKey, apiSecret);
             var binanceClient = new BinanceClient(apiClient);
-
-            // Get Account Info && Balances
-            var myBalances = getBalances();
+            var myBalances = new List<Balance>();
 
             // Read Symbols
             List<Symbol> mySembols = readSymbols();
@@ -196,25 +202,28 @@ namespace Binance.OTT.Trade
             List<Order> myOpenOrders = getCurrentOpenOrders(mySembols);
 
             // Get Account Last Trades
-            List<Order> myLastSellTrades = getLastSellTrades(mySembols);
+            List<Order> myLastTrades = getLastTrades(mySembols);
 
             // Trade
             foreach (var item in mySembols)
             {
+                // Get Account Info && Balances
+                myBalances = getBalances();
                 Order myCurrentOpenOrder = myOpenOrders.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
                 Balance myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
                 Balance myCurrentCoinBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
+                Order myCurrentLastTrade = myLastTrades.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
                 Candlestick myCurrentCandleStick = myCandlesticks.FirstOrDefault(i => i.Symbol == item.symbol);
                 Candlestick myAvailableCurrentCandleStick = myAvailableCandlesticks.FirstOrDefault(i => i.Symbol == item.symbol);
                 decimal buyPrice = 0;
                 decimal buyQuantity = 0;
                 decimal sellPrice = 0;
                 decimal sellQuantity = 0;
-                decimal availableBuyAmount = 12;
+                decimal availableBuyAmount = (myCurrentUSDTBalance.Free * item.depositRatio) / 100;
                 long orderId = 0;
 
                 // Case 1
-                if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && myCurrentUSDTBalance.Free > availableBuyAmount)
+                if ((myCurrentLastTrade == null || (myCurrentLastTrade.Side == "SELL")) && myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && availableBuyAmount > 10.02M && myCurrentUSDTBalance.Free > availableBuyAmount)
                 {
                     if ((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)) > myAvailableCurrentCandleStick.High)
                         buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.002M), 2);
@@ -240,11 +249,16 @@ namespace Binance.OTT.Trade
                         buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.002M), 2);
                     else
                         buyPrice = Math.Round((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)), 2);
+
+                    // Re-Calculate Balance after cancelling order
+                    myBalances = getBalances();
+                    myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
+                    availableBuyAmount = (myCurrentUSDTBalance.Free * item.depositRatio) / 100;
                     buyQuantity = Math.Round((availableBuyAmount / buyPrice), 4);
 
                     NewOrder myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
                 } // Case 4
-                else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && myCurrentCoinBalance.Free > 0)
+                else if ((myCurrentLastTrade != null && myCurrentLastTrade.Side == "BUY") && myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && myCurrentCoinBalance.Free > 0)
                 {
                     if ((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
                         sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), 2);
