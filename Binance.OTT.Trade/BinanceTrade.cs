@@ -253,6 +253,26 @@ namespace Binance.OTT.Trade
                     sellQuantity = Math.Round(myCurrentCoinBalance.Free - 0.0001M, 4);
 
                     NewOrder myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
+                } // Case 5
+                else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
+                {
+                    orderId = myCurrentOpenOrder.OrderId;
+
+                    CanceledOrder myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+                } // Case 6
+                else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
+                {
+                    orderId = myCurrentOpenOrder.OrderId;
+
+                    CanceledOrder myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+
+                    if ((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
+                        sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), 2);
+                    else
+                        sellPrice = Math.Round((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)), 2);
+                    sellQuantity = Math.Round(myCurrentCoinBalance.Locked - 0.0001M, 4);
+
+                    NewOrder myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                 }
             }
         }
