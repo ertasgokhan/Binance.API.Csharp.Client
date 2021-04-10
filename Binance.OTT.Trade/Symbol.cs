@@ -10,9 +10,21 @@ namespace Binance.OTT.Trade
     {
         public string symbol { get; set; }
 
+        public string symbolCoin { get; set; }
+
         public int length { get; set; }
 
         public decimal percent { get; set; }
+
+        public decimal buyRatio { get; set; }
+
+        public decimal sellRatio { get; set; }
+
+        public bool buyTrendSwitch { get; set; }
+
+        public decimal buyTrendRatio { get; set; }
+
+        public decimal sellTrendRatio { get; set; }
 
     }
 }

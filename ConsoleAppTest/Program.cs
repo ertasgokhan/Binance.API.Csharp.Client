@@ -5,11 +5,11 @@ namespace ConsoleAppTest
 {
     class Program
     {
-        static void Main(string[] args)
+        static async System.Threading.Tasks.Task Main(string[] args)
         {
             DateTime startTime = DateTime.Now;
 
-            BinanceTrade.Trade();
+            await BinanceTrade.TradeAsync();
 
             DateTime endTime = DateTime.Now;
 
