@@ -5,15 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Binance.API.Csharp.Client">
-      <HintPath>..\..\BinanceBot\BinanceBot\SharedLib\Binance.API.Csharp.Client.dll</HintPath>
-    </Reference>
-    <Reference Include="Binance.API.Csharp.Client.Domain">
-      <HintPath>..\..\BinanceBot\BinanceBot\SharedLib\Binance.API.Csharp.Client.Domain.dll</HintPath>
-    </Reference>
-    <Reference Include="Binance.API.Csharp.Client.Models">
-      <HintPath>..\..\BinanceBot\BinanceBot\SharedLib\Binance.API.Csharp.Client.Models.dll</HintPath>
-    </Reference>
+    <ProjectReference Include="..\Binance.API.Csharp.Client.Domain\Binance.API.Csharp.Client.Domain.csproj" />
+    <ProjectReference Include="..\Binance.API.Csharp.Client.Models\Binance.API.Csharp.Client.Models.csproj" />
+    <ProjectReference Include="..\Binance.API.Csharp.Client\Binance.API.Csharp.Client.csproj" />
   </ItemGroup>
 
 </Project>

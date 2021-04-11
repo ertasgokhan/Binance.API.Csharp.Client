@@ -10,7 +10,7 @@ namespace Binance.API.Csharp.Client.Models.Account
         public string Symbol { get; set; }
 
         [JsonProperty("orderId")]
-        public int OrderId { get; set; }
+        public long OrderId { get; set; }
 
         [JsonProperty("clientOrderId")]
         public string ClientOrderId { get; set; }

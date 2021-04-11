@@ -168,7 +168,7 @@ namespace Binance.OTT.Trade
 
                 if (myCurrentOrder != null && myCurrentOrder.Count() > 0)
                 {
-                    myLastOrder = myCurrentOrder.Last(i => i.Status == "FILLED");
+                    myLastOrder = myCurrentOrder.LastOrDefault(i => i.Status == "FILLED");
 
                     if (myLastOrder != null)
                         myLastFilledOrders.Add(myLastOrder);
