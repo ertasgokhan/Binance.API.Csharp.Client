@@ -8,19 +8,22 @@ using System.Linq;
 using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
+using Telegram.Bot;
 
 namespace Binance.Generate.OTT
 {
     public static class GenerateOTTLine
     {
-        public const string sourceDirectory = @"C:\BinanceBot\";
-        public const string apiKey = "srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej";
-        public const string apiSecret = "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj";
-        public const int limit = 1000;
+        private const string sourceDirectory = @"C:\BinanceBot\";
+        private const string apiKey = "srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej";
+        private const string apiSecret = "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj";
+        private const int limit = 1000;
+        private static TelegramBotClient botClient = new TelegramBotClient("1724957087:AAH0ByKhfMJIGPP8JI51oJMqCh9HbwwmRrU");
 
         public static void GenerateOTT()
         {
             List<Symbol> symbolsList = readSymbols();
+            SendMessageFromTelegramBot(string.Format("OTT Line Generate için tüm Symboller dosyadan okunmuştur"));
 
             foreach (var item in symbolsList)
             {
@@ -28,7 +31,7 @@ namespace Binance.Generate.OTT
             }
         }
 
-        public static List<Symbol> readSymbols()
+        private static List<Symbol> readSymbols()
         {
             List<Symbol> symbolsList = new List<Symbol>();
             string filepath = sourceDirectory + "symbols.txt";
@@ -49,7 +52,7 @@ namespace Binance.Generate.OTT
             return symbolsList;
         }
 
-        public static void GetForOnePair(Symbol symbolItem)
+        private static void GetForOnePair(Symbol symbolItem)
         {
             try
             {
@@ -81,15 +84,16 @@ namespace Binance.Generate.OTT
                     sw.WriteLine(OTTLines);
                 }
 
-                SendEmail(symbol);
+                SendMessageFromTelegramBot(string.Format("{0} için mum verileri başarıyla okunmuştur", symbol));
             }
             catch (Exception ex)
             {
-                WriteLog(ex.Message);
+                SendMessageFromTelegramBot(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol, ((System.IO.FileLoadException)ex.InnerException).Message));
+                WriteLog(((System.IO.FileLoadException)ex.InnerException).Message);
             }
         }
 
-        public static string ReturnOTT(List<Candlestick> candlestick, int length, decimal percent)
+        private static string ReturnOTT(List<Candlestick> candlestick, int length, decimal percent)
         {
             string OTTValues = string.Empty;
 
@@ -224,7 +228,7 @@ namespace Binance.Generate.OTT
             return OTTValues;
         }
 
-        public static void WriteLog(string LogMessage)
+        private static void WriteLog(string LogMessage)
         {
             string filepath = sourceDirectory + "\\Log.txt";
 
@@ -244,7 +248,7 @@ namespace Binance.Generate.OTT
             }
         }
 
-        public static void SendEmail(string symbol)
+        private static void SendEmail(string symbol)
         {
             string toAddress = "";
             string fromPassword = "";
@@ -288,6 +292,11 @@ namespace Binance.Generate.OTT
             {
                 smtp.Send(message);
             }
+        }
+
+        private static void SendMessageFromTelegramBot(string message)
+        {
+            botClient.SendTextMessageAsync("-535329225", message);
         }
     }
 }

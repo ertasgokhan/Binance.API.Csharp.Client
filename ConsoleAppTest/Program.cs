@@ -1,15 +1,20 @@
 ﻿using Binance.OTT.Trade;
 using System;
+using System.Threading.Tasks;
+using Telegram.Bot;
+using Telegram.Bot.Args;
 
 namespace ConsoleAppTest
 {
     class Program
     {
-        static async System.Threading.Tasks.Task Main(string[] args)
+        public static void Main(string[] args)
         {
             DateTime startTime = DateTime.Now;
 
-            await BinanceTrade.TradeAsync();
+            // await BinanceTrade.TradeAsync();
+
+            Binance.Generate.OTT.GenerateOTTLine.GenerateOTT();
 
             DateTime endTime = DateTime.Now;
 
