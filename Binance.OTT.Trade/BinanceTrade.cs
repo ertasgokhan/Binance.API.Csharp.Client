@@ -390,6 +390,10 @@ namespace Binance.OTT.Trade
                         SendMessageFromTelegramBot(string.Format("{0} için mevcuttaki SATIŞ emri GÜNCELLENMEMİŞTİR. Mevcut SATIŞ fiyatı {1}", item.symbol.ToUpper(), sellPrice));
                     }
                 }
+                else
+                {
+                    SendMessageFromTelegramBot(string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır", item.symbol.ToUpper()));
+                }
             }
         }
     }
