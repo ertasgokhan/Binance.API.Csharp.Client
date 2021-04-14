@@ -19,6 +19,8 @@ namespace Binance.Generate.OTT
         private const string apiSecret = "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj";
         private const int limit = 1000;
         private static TelegramBotClient botClient = new TelegramBotClient("1724957087:AAH0ByKhfMJIGPP8JI51oJMqCh9HbwwmRrU");
+        private static ApiClient apiClient = new ApiClient(apiKey, apiSecret);
+        private static BinanceClient binanceClient = new BinanceClient(apiClient);
 
         public static void GenerateOTT()
         {
@@ -56,8 +58,6 @@ namespace Binance.Generate.OTT
         {
             try
             {
-                var apiClient = new ApiClient(apiKey, apiSecret);
-                var binanceClient = new BinanceClient(apiClient);
                 string symbol = symbolItem.symbol;
                 int Length = symbolItem.length;
                 decimal Percent = symbolItem.percent;
