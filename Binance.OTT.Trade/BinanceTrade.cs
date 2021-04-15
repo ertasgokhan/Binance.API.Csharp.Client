@@ -87,6 +87,11 @@ namespace Binance.OTT.Trade
                     lastCandleStick.BuySignal = lastCandleStickStr.Split(';')[7] == "0" ? false : true;
                     lastCandleStick.SellSignal = lastCandleStickStr.Split(';')[8] == "0" ? false : true;
                     candlestickList.Add(lastCandleStick);
+
+                    if (lastCandleStick.BuySignal)
+                        SendMessageFromTelegramBot(string.Format("{0} için OTT tarafından AL sinyali gelmiştir", item.symbol.ToUpper()));
+                    else if (lastCandleStick.SellSignal)
+                        SendMessageFromTelegramBot(string.Format("{0} için OTT tarafından SAT sinyali gelmiştir", item.symbol.ToUpper()));
                 }
             }
 
@@ -144,6 +149,7 @@ namespace Binance.OTT.Trade
             decimal idleUSDTBalance = 0;
             decimal symbolUSDTBalanceCount = 0;
             decimal addedAvailableAmount = 0;
+            decimal finalAvailableAmount = 0;
 
             foreach (var item in symbols)
             {
@@ -157,7 +163,7 @@ namespace Binance.OTT.Trade
                     myCurrentBalanceAmount = (myCurrentBalance.Free + myCurrentBalance.Locked) * myCurrentCandlestickList.Close;
                     myCurrentUSDTBalanceAmount = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * item.depositRatio) / 100;
 
-                    if (myCurrentBalanceAmount < 10.02M && myCurrentUSDTBalanceAmount > 10.02M)
+                    if (myCurrentBalanceAmount < 10.02M)
                     {
                         mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = myCurrentUSDTBalanceAmount);
                         symbolUSDTBalanceCount++;
@@ -171,17 +177,8 @@ namespace Binance.OTT.Trade
                 else if (myCurrentBalance == null)
                 {
                     myCurrentUSDTBalanceAmount = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * item.depositRatio) / 100;
-
-                    if (myCurrentUSDTBalanceAmount > 10.02M)
-                    {
-                        mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = myCurrentUSDTBalanceAmount);
-                        symbolUSDTBalanceCount++;
-                    }
-                    else
-                    {
-                        mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = 0);
-                        idleDepositRatio += item.depositRatio;
-                    }
+                    mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = myCurrentUSDTBalanceAmount);
+                    symbolUSDTBalanceCount++;
                 }
             }
 
@@ -192,8 +189,12 @@ namespace Binance.OTT.Trade
                 if (item2.availableAmount > 0)
                 {
                     addedAvailableAmount = Math.Round(idleUSDTBalance / symbolUSDTBalanceCount, 2);
+                    finalAvailableAmount = item2.availableAmount + addedAvailableAmount;
 
-                    mySembols.Where(i => i.symbolCoin == item2.symbolCoin).ToList().ForEach(c => c.availableAmount = c.availableAmount + addedAvailableAmount);
+                    if (finalAvailableAmount > 10.02M)
+                        mySembols.Where(i => i.symbolCoin == item2.symbolCoin).ToList().ForEach(c => c.availableAmount = c.availableAmount + addedAvailableAmount);
+                    else
+                        mySembols.Where(i => i.symbolCoin == item2.symbolCoin).ToList().ForEach(c => c.availableAmount = 0);
                 }
             }
         }
@@ -417,7 +418,7 @@ namespace Binance.OTT.Trade
                         else
                             sellPrice = Math.Round((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)), item.priceRound);
 
-                        sellQuantity = Math.Round(myCurrentCoinBalance.Free - 0.0001M, item.quantityRound);
+                        sellQuantity = Math.Round(myCurrentCoinBalance.Free - (1 / (10 ^ item.quantityRound)), item.quantityRound);
 
                         myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                         orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
@@ -445,7 +446,7 @@ namespace Binance.OTT.Trade
 
                             myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
-                            sellQuantity = Math.Round(myCurrentCoinBalance.Locked - 0.0001M, item.quantityRound);
+                            sellQuantity = Math.Round(myCurrentCoinBalance.Locked - (1 / (10 ^ item.quantityRound)), item.quantityRound);
 
                             myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                             orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
