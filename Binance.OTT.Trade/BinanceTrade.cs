@@ -43,7 +43,9 @@ namespace Binance.OTT.Trade
                     tmp.buyTrendRatio = Decimal.Parse(str.Split(';')[6]);
                     tmp.sellTrendRatio = Decimal.Parse(str.Split(';')[7]);
                     tmp.depositRatio = int.Parse(str.Split(';')[8]);
-                    tmp.symbolCoin = str.Split(';')[9];
+                    tmp.priceRound = int.Parse(str.Split(';')[9]);
+                    tmp.quantityRound = int.Parse(str.Split(';')[10]);
+                    tmp.symbolCoin = str.Split(';')[11];
                     symbolsList.Add(tmp);
                 }
             }
@@ -91,13 +93,9 @@ namespace Binance.OTT.Trade
             return candlestickList;
         }
 
-        private static List<Candlestick> readCurrentCandleSticks(List<Symbol> symbols, List<Balance> myBalances)
+        private static List<Candlestick> readCurrentCandleSticks(List<Symbol> symbols)
         {
             List<Candlestick> candlestickList = new List<Candlestick>();
-            Balance myCurrentBalance = new Balance();
-            Balance myCurrentUSDTBalance = new Balance();
-            decimal myCurrentBalanceAmount = 0;
-            decimal myCurrentUSDTBalanceAmount = 0;
             string filepath = string.Empty;
             int lineNumber = 0;
             string symbolCandleStick = string.Empty;
@@ -111,8 +109,6 @@ namespace Binance.OTT.Trade
                 symbolCandleStick = string.Empty;
                 lastCandleStickStr = string.Empty;
                 lastCandleStick = new Candlestick();
-                myCurrentBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
-                myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
 
                 using (StreamReader rd = File.OpenText(filepath))
                 {
@@ -132,30 +128,74 @@ namespace Binance.OTT.Trade
                     lastCandleStick.SellSignal = lastCandleStickStr.Split(';')[8] == "0" ? false : true;
                     candlestickList.Add(lastCandleStick);
                 }
+            }
+
+            return candlestickList;
+        }
+
+        private static void calculateAvailableAmount(List<Symbol> symbols, List<Balance> myBalances, List<Candlestick> candlestickList)
+        {
+            Candlestick myCurrentCandlestickList = new Candlestick();
+            Balance myCurrentBalance = new Balance();
+            Balance myCurrentUSDTBalance = new Balance();
+            decimal myCurrentBalanceAmount = 0;
+            decimal myCurrentUSDTBalanceAmount = 0;
+            decimal idleDepositRatio = 0;
+            decimal idleUSDTBalance = 0;
+            decimal symbolUSDTBalanceCount = 0;
+            decimal addedAvailableAmount = 0;
+
+            foreach (var item in symbols)
+            {
+                myCurrentBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
+                myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
+                myCurrentCandlestickList = candlestickList.FirstOrDefault(i => i.Symbol == item.symbol);
 
                 // Calculate Available Amount
                 if (myCurrentBalance != null && myCurrentUSDTBalance != null)
                 {
-                    myCurrentBalanceAmount = (myCurrentBalance.Free + myCurrentBalance.Locked) * lastCandleStick.Close;
+                    myCurrentBalanceAmount = (myCurrentBalance.Free + myCurrentBalance.Locked) * myCurrentCandlestickList.Close;
                     myCurrentUSDTBalanceAmount = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * item.depositRatio) / 100;
 
                     if (myCurrentBalanceAmount < 10.02M && myCurrentUSDTBalanceAmount > 10.02M)
+                    {
                         mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = myCurrentUSDTBalanceAmount);
+                        symbolUSDTBalanceCount++;
+                    }
                     else
+                    {
                         mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = 0);
+                        idleDepositRatio += item.depositRatio;
+                    }
                 }
                 else if (myCurrentBalance == null)
                 {
                     myCurrentUSDTBalanceAmount = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * item.depositRatio) / 100;
 
                     if (myCurrentUSDTBalanceAmount > 10.02M)
+                    {
                         mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = myCurrentUSDTBalanceAmount);
+                        symbolUSDTBalanceCount++;
+                    }
                     else
+                    {
                         mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = 0);
+                        idleDepositRatio += item.depositRatio;
+                    }
                 }
             }
 
-            return candlestickList;
+            idleUSDTBalance = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * idleDepositRatio) / 100;
+
+            foreach (var item2 in symbols)
+            {
+                if (item2.availableAmount > 0)
+                {
+                    addedAvailableAmount = Math.Round(idleUSDTBalance / symbolUSDTBalanceCount, 2);
+
+                    mySembols.Where(i => i.symbolCoin == item2.symbolCoin).ToList().ForEach(c => c.availableAmount = c.availableAmount + addedAvailableAmount);
+                }
+            }
         }
 
         private static List<Balance> getBalances()
@@ -211,189 +251,222 @@ namespace Binance.OTT.Trade
             botClient.SendTextMessageAsync("-535329225", message);
         }
 
+        private static void WriteLog(string LogMessage)
+        {
+            string filepath = sourceDirectory + "\\Log.txt";
+
+            if (!File.Exists(filepath))
+            {
+                using (StreamWriter sw = File.CreateText(filepath))
+                {
+                    sw.WriteLine(LogMessage);
+                }
+            }
+            else
+            {
+                using (StreamWriter sw = File.AppendText(filepath))
+                {
+                    sw.WriteLine(LogMessage);
+                }
+            }
+        }
+
         public static async Task TradeAsync()
         {
-            Symbol myLastSymbol = new Symbol();
-            List<Candlestick> myCandlesticks = new List<Candlestick>();
-            List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
-            List<Balance> myBalances = new List<Balance>();
-            Order myCurrentOpenOrder = new Order();
-            Balance myCurrentUSDTBalance = new Balance();
-            Balance myCurrentCoinBalance = new Balance();
-            Order myCurrentLastTrade = new Order();
-            Candlestick myCurrentCandleStick = new Candlestick();
-            Candlestick myAvailableCurrentCandleStick = new Candlestick();
-            NewOrder myNewOrder = new NewOrder();
-            CanceledOrder myCancelOrder = new CanceledOrder();
-            decimal buyPrice = 0;
-            decimal buyQuantity = 0;
-            decimal orderAmount = 0;
-            decimal sellPrice = 0;
-            decimal sellQuantity = 0;
-            decimal availableBuyAmount = 0;
-            decimal currentCoinUSDTAmount = 0;
-            decimal currentCoinAmount = 0;
-            long orderId = 0;
-
-            // Read Symbols
-            mySembols = readSymbols();
-
-            // Get Balances
-            myBalances = getBalances();
-
-            // Read CandleSticks
-            myCandlesticks = readLastCandleSticks(mySembols);
-            myAvailableCandlesticks = readCurrentCandleSticks(mySembols, myBalances);
-
-            // Get Open Orders
-            List<Order> myOpenOrders = getCurrentOpenOrders(mySembols);
-
-            // Get Account Last Trades
-            List<Order> myLastTrades = getLastTrades(mySembols);
-
-            // Get My Last Symbol
-            myLastSymbol = mySembols.LastOrDefault();
-
-            // USDT Balanace
-            myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
-            if (myCurrentUSDTBalance != null)
-                SendMessageFromTelegramBot(string.Format("Mevcut USDT miktarı: {0}", Math.Round((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked), 2)));
-
-            // Trade
-            foreach (var item in mySembols)
+            try
             {
-                // Get Account Info && Balances
+                Symbol myLastSymbol = new Symbol();
+                List<Candlestick> myCandlesticks = new List<Candlestick>();
+                List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
+                List<Balance> myBalances = new List<Balance>();
+                Order myCurrentOpenOrder = new Order();
+                Balance myCurrentUSDTBalance = new Balance();
+                Balance myCurrentCoinBalance = new Balance();
+                Order myCurrentLastTrade = new Order();
+                Candlestick myCurrentCandleStick = new Candlestick();
+                Candlestick myAvailableCurrentCandleStick = new Candlestick();
+                NewOrder myNewOrder = new NewOrder();
+                CanceledOrder myCancelOrder = new CanceledOrder();
+                decimal buyPrice = 0;
+                decimal buyQuantity = 0;
+                decimal orderAmount = 0;
+                decimal sellPrice = 0;
+                decimal sellQuantity = 0;
+                decimal availableBuyAmount = 0;
+                decimal currentCoinUSDTAmount = 0;
+                decimal currentCoinAmount = 0;
+                long orderId = 0;
+
+                // Read Symbols
+                mySembols = readSymbols();
+
+                // Get Balances
                 myBalances = getBalances();
-                myCurrentOpenOrder = myOpenOrders.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
+
+                // Read CandleSticks
+                myCandlesticks = readLastCandleSticks(mySembols);
+                myAvailableCandlesticks = readCurrentCandleSticks(mySembols);
+
+                // Calculate Available Amount
+                calculateAvailableAmount(mySembols, myBalances, myAvailableCandlesticks);
+
+                // Get Open Orders
+                List<Order> myOpenOrders = getCurrentOpenOrders(mySembols);
+
+                // Get Account Last Trades
+                List<Order> myLastTrades = getLastTrades(mySembols);
+
+                // Get My Last Symbol
+                myLastSymbol = mySembols.LastOrDefault();
+
+                // USDT Balanace
                 myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
-                myCurrentCoinBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
-                myCurrentLastTrade = myLastTrades.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
-                myCurrentCandleStick = myCandlesticks.FirstOrDefault(i => i.Symbol == item.symbol);
-                myAvailableCurrentCandleStick = myAvailableCandlesticks.FirstOrDefault(i => i.Symbol == item.symbol);
-                buyPrice = 0;
-                buyQuantity = 0;
-                sellPrice = 0;
-                sellQuantity = 0;
-                orderId = 0;
-                orderAmount = 0;
-                currentCoinUSDTAmount = 0;
-                currentCoinAmount = 0;
+                if (myCurrentUSDTBalance != null)
+                    SendMessageFromTelegramBot(string.Format("Mevcut USDT miktarı: {0}", Math.Round((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked), 2)));
 
-                // Get Available Amount
-                availableBuyAmount = item.availableAmount;
-
-                // Send Coin Info
-                if (myCurrentCoinBalance != null)
+                // Trade
+                foreach (var item in mySembols)
                 {
-                    currentCoinUSDTAmount = Math.Round(((myCurrentCoinBalance.Free + myCurrentCoinBalance.Locked) * myAvailableCurrentCandleStick.Close), 2);
-                    currentCoinAmount = myCurrentCoinBalance.Free + myCurrentCoinBalance.Locked;
-                }
-                else
-                {
+                    // Get Account Info && Balances
+                    myBalances = getBalances();
+                    myCurrentOpenOrder = myOpenOrders.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
+                    myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
+                    myCurrentCoinBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
+                    myCurrentLastTrade = myLastTrades.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
+                    myCurrentCandleStick = myCandlesticks.FirstOrDefault(i => i.Symbol == item.symbol);
+                    myAvailableCurrentCandleStick = myAvailableCandlesticks.FirstOrDefault(i => i.Symbol == item.symbol);
+                    buyPrice = 0;
+                    buyQuantity = 0;
+                    sellPrice = 0;
+                    sellQuantity = 0;
+                    orderId = 0;
+                    orderAmount = 0;
                     currentCoinUSDTAmount = 0;
                     currentCoinAmount = 0;
-                }
 
-                SendMessageFromTelegramBot(string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
+                    // Get Available Amount
+                    availableBuyAmount = item.availableAmount;
 
-                // Case 1
-                if ((myCurrentLastTrade == null || (myCurrentLastTrade.Side == "SELL")) && myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && availableBuyAmount > 10.02M && myCurrentUSDTBalance.Free > availableBuyAmount)
-                {
-                    if ((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)) > myAvailableCurrentCandleStick.High)
-                        buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.002M), 2);
-                    else
-                        buyPrice = Math.Round((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)), 2);
-                    buyQuantity = Math.Round((availableBuyAmount / buyPrice), 4);
-
-                    myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
-                    orderAmount = Math.Round(buyQuantity * buyPrice, 2);
-
-                    SendMessageFromTelegramBot(string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount));
-                } // Case 2
-                else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
-                {
-                    orderId = myCurrentOpenOrder.OrderId;
-
-                    myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
-
-                    SendMessageFromTelegramBot(string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
-                } // Case 3
-                else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
-                {
-                    if ((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)) > myAvailableCurrentCandleStick.High)
-                        buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.002M), 2);
-                    else
-                        buyPrice = Math.Round((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)), 2);
-
-                    if (myCurrentOpenOrder.Price != buyPrice)
+                    // Send Coin Info
+                    if (myCurrentCoinBalance != null)
                     {
-                        orderId = myCurrentOpenOrder.OrderId;
+                        currentCoinUSDTAmount = Math.Round(((myCurrentCoinBalance.Free + myCurrentCoinBalance.Locked) * myAvailableCurrentCandleStick.Close), 2);
+                        currentCoinAmount = myCurrentCoinBalance.Free + myCurrentCoinBalance.Locked;
+                    }
+                    else
+                    {
+                        currentCoinUSDTAmount = 0;
+                        currentCoinAmount = 0;
+                    }
 
-                        myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+                    SendMessageFromTelegramBot(string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
 
-                        // Calculate Quantity 
-                        buyQuantity = Math.Round((availableBuyAmount / buyPrice), 4);
+                    // Case 1
+                    if ((myCurrentLastTrade == null || (myCurrentLastTrade.Side == "SELL")) && myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && availableBuyAmount > 10.02M && myCurrentUSDTBalance.Free > availableBuyAmount)
+                    {
+                        if ((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)) > myAvailableCurrentCandleStick.High)
+                            buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
+                        else
+                            buyPrice = Math.Round((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)), item.priceRound);
+
+                        buyQuantity = Math.Round((availableBuyAmount / buyPrice), item.quantityRound);
 
                         myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
-                        orderAmount = Math.Round(buyQuantity * buyPrice, 2);
+                        orderAmount = Math.Round(buyQuantity * buyPrice, item.priceRound);
 
-                        SendMessageFromTelegramBot(string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount));
-                    }
-                    else
-                    {
-                        SendMessageFromTelegramBot(string.Format("{0} için mevcuttaki ALIM emri GÜNCELLENMEMİŞTİR. Mevcut ALIM fiyatı {1}", item.symbol.ToUpper(), buyPrice));
-                    }
-                } // Case 4
-                else if ((myCurrentLastTrade != null && myCurrentLastTrade.Side == "BUY") && myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && myCurrentCoinBalance.Free > 0)
-                {
-                    if ((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
-                        sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), 2);
-                    else
-                        sellPrice = Math.Round((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)), 2);
-                    sellQuantity = Math.Round(myCurrentCoinBalance.Free - 0.0001M, 4);
-
-                    myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
-                    orderAmount = Math.Round(sellQuantity * sellPrice, 2);
-
-                    SendMessageFromTelegramBot(string.Format("{0} için {1} adet ve {2} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount));
-                } // Case 5
-                else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
-                {
-                    orderId = myCurrentOpenOrder.OrderId;
-
-                    myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
-
-                    SendMessageFromTelegramBot(string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
-                } // Case 6
-                else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
-                {
-                    if ((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
-                        sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), 2);
-                    else
-                        sellPrice = Math.Round((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)), 2);
-
-                    if (myCurrentOpenOrder.Price != sellPrice)
+                        SendMessageFromTelegramBot(string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount));
+                    } // Case 2
+                    else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
                     {
                         orderId = myCurrentOpenOrder.OrderId;
 
                         myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
-                        sellQuantity = Math.Round(myCurrentCoinBalance.Locked - 0.0001M, 4);
+                        SendMessageFromTelegramBot(string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
+                    } // Case 3
+                    else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
+                    {
+                        if ((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)) > myAvailableCurrentCandleStick.High)
+                            buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
+                        else
+                            buyPrice = Math.Round((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)), item.priceRound);
+
+                        if (myCurrentOpenOrder.Price != buyPrice)
+                        {
+                            orderId = myCurrentOpenOrder.OrderId;
+
+                            myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+
+                            // Calculate Quantity 
+                            buyQuantity = Math.Round((availableBuyAmount / buyPrice), item.quantityRound);
+
+                            myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
+                            orderAmount = Math.Round(buyQuantity * buyPrice, 2);
+
+                            SendMessageFromTelegramBot(string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount));
+                        }
+                        else
+                        {
+                            SendMessageFromTelegramBot(string.Format("{0} için mevcuttaki ALIM emri GÜNCELLENMEMİŞTİR. Mevcut ALIM fiyatı {1}", item.symbol.ToUpper(), buyPrice));
+                        }
+                    } // Case 4
+                    else if ((myCurrentLastTrade != null && myCurrentLastTrade.Side == "BUY") && myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && myCurrentCoinBalance.Free > 0)
+                    {
+                        if ((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
+                            sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
+                        else
+                            sellPrice = Math.Round((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)), item.priceRound);
+
+                        sellQuantity = Math.Round(myCurrentCoinBalance.Free - 0.0001M, item.quantityRound);
 
                         myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
-                        orderAmount = Math.Round(sellQuantity * sellPrice, 2);
+                        orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
 
-                        SendMessageFromTelegramBot(string.Format("{0} için önceki verilen SATIŞ emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan SATIŞ emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, sellQuantity, sellPrice, orderAmount));
+                        SendMessageFromTelegramBot(string.Format("{0} için {1} adet ve {2} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount));
+                    } // Case 5
+                    else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
+                    {
+                        orderId = myCurrentOpenOrder.OrderId;
+
+                        myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+
+                        SendMessageFromTelegramBot(string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
+                    } // Case 6
+                    else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
+                    {
+                        if ((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
+                            sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
+                        else
+                            sellPrice = Math.Round((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)), item.priceRound);
+
+                        if (myCurrentOpenOrder.Price != sellPrice)
+                        {
+                            orderId = myCurrentOpenOrder.OrderId;
+
+                            myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+
+                            sellQuantity = Math.Round(myCurrentCoinBalance.Locked - 0.0001M, item.quantityRound);
+
+                            myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
+                            orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
+
+                            SendMessageFromTelegramBot(string.Format("{0} için önceki verilen SATIŞ emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan SATIŞ emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, sellQuantity, sellPrice, orderAmount));
+                        }
+                        else
+                        {
+                            SendMessageFromTelegramBot(string.Format("{0} için mevcuttaki SATIŞ emri GÜNCELLENMEMİŞTİR. Mevcut SATIŞ fiyatı {1}", item.symbol.ToUpper(), sellPrice));
+                        }
                     }
                     else
                     {
-                        SendMessageFromTelegramBot(string.Format("{0} için mevcuttaki SATIŞ emri GÜNCELLENMEMİŞTİR. Mevcut SATIŞ fiyatı {1}", item.symbol.ToUpper(), sellPrice));
+                        SendMessageFromTelegramBot(string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır", item.symbol.ToUpper()));
                     }
                 }
-                else
-                {
-                    SendMessageFromTelegramBot(string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır", item.symbol.ToUpper()));
-                }
+            }
+            catch (Exception ex)
+            {
+                SendMessageFromTelegramBot(string.Format("Trade işlemi sırasında hata oluşmuştır. Hata: {0}", ex.Message));
+                WriteLog(ex.Message);
             }
         }
     }

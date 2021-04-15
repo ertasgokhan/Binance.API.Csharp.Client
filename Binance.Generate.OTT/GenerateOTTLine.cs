@@ -25,7 +25,7 @@ namespace Binance.Generate.OTT
         public static void GenerateOTT()
         {
             List<Symbol> symbolsList = readSymbols();
-            SendMessageFromTelegramBot(string.Format("OTT Line Generate için tüm Symboller dosyadan okunmuştur"));
+            SendMessageFromTelegramBot(string.Format("OTTLine Generate için tüm Symboller dosyadan okunmuştur"));
 
             foreach (var item in symbolsList)
             {
@@ -84,11 +84,11 @@ namespace Binance.Generate.OTT
                     sw.WriteLine(OTTLines);
                 }
 
-                SendMessageFromTelegramBot(string.Format("{0} için mum verileri başarıyla okunmuştur", symbol));
+                SendMessageFromTelegramBot(string.Format("{0} için mum verileri başarıyla okunmuştur", symbol.ToUpper()));
             }
             catch (Exception ex)
             {
-                SendMessageFromTelegramBot(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol, ((System.IO.FileLoadException)ex.InnerException).Message));
+                SendMessageFromTelegramBot(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ((System.IO.FileLoadException)ex.InnerException).Message));
                 WriteLog(((System.IO.FileLoadException)ex.InnerException).Message);
             }
         }

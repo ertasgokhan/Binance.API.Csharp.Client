@@ -29,5 +29,9 @@ namespace Binance.OTT.Trade
         public int depositRatio { get; set; }
 
         public decimal availableAmount { get; set; }
+
+        public int quantityRound { get; set; }
+
+        public int priceRound { get; set; }
     }
 }
