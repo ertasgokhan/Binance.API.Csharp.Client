@@ -67,7 +67,7 @@ namespace Binance.Generate.OTT
                 List<Candlestick> candlestick = new List<Candlestick>();
                 List<Candlestick> tempCandlestick = new List<Candlestick>();
 
-                for (int i = -24; i < 0; i++)
+                for (int i = -20; i < 0; i++)
                 {
                     tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddMonths(i), DateTime.Now.AddMonths(i + 1), limit).Result.ToList();
 
