@@ -199,12 +199,27 @@ namespace Binance.OTT.Trade
             }
         }
 
-        private static List<Balance> getBalances()
+        private static List<Balance> getBalances(List<Symbol> mySembols)
         {
             // Get Acount Infos
             var accountInfos = binanceClient.GetAccountInfo().Result;
+            var tempBalances = new List<Balance>();
+            var myCurrentSymbol = new Symbol();
 
-            return accountInfos.Balances.Where(i => i.Locked != 0 || i.Free != 0).ToList();
+            tempBalances = accountInfos.Balances.Where(i => i.Locked != 0 || i.Free != 0).ToList();
+
+            foreach (var item in tempBalances)
+            {
+                myCurrentSymbol = mySembols.FirstOrDefault(i => i.symbolCoin == item.Asset);
+
+                if (myCurrentSymbol != null)
+                {
+                    item.Free = Math.Round(item.Free, myCurrentSymbol.quantityRound);
+                    item.Locked = Math.Round(item.Locked, myCurrentSymbol.quantityRound);
+                }
+            }
+
+            return tempBalances;
         }
 
         private static List<Order> getCurrentOpenOrders(List<Symbol> symbols)
@@ -302,7 +317,7 @@ namespace Binance.OTT.Trade
                 mySembols = readSymbols();
 
                 // Get Balances
-                myBalances = getBalances();
+                myBalances = getBalances(mySembols);
 
                 // Read CandleSticks
                 myCandlesticks = readLastCandleSticks(mySembols);
@@ -329,7 +344,7 @@ namespace Binance.OTT.Trade
                 foreach (var item in mySembols)
                 {
                     // Get Account Info && Balances
-                    myBalances = getBalances();
+                    myBalances = getBalances(mySembols);
                     myCurrentOpenOrder = myOpenOrders.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
                     myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
                     myCurrentCoinBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
@@ -418,7 +433,7 @@ namespace Binance.OTT.Trade
                         else
                             sellPrice = Math.Round((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)), item.priceRound);
 
-                        sellQuantity = Math.Round(myCurrentCoinBalance.Free - (1 / (10 ^ item.quantityRound)), item.quantityRound);
+                        sellQuantity = Math.Round(myCurrentCoinBalance.Free - (decimal)Math.Pow(10, (item.quantityRound * -1)), item.quantityRound);
 
                         myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                         orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
@@ -446,7 +461,7 @@ namespace Binance.OTT.Trade
 
                             myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
-                            sellQuantity = Math.Round(myCurrentCoinBalance.Locked - (1 / (10 ^ item.quantityRound)), item.quantityRound);
+                            sellQuantity = Math.Round(myCurrentCoinBalance.Locked - (decimal)Math.Pow(10, (item.quantityRound * -1)), item.quantityRound);
 
                             myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                             orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
