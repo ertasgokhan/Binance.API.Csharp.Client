@@ -398,7 +398,7 @@ namespace Binance.OTT.Trade
 
                         myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
-                        SendMessageFromTelegramBot(string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
+                        SendMessageFromTelegramBot(string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
                     } // Case 3
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
                     {
