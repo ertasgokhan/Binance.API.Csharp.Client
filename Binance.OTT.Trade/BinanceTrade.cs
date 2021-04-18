@@ -26,200 +26,249 @@ namespace Binance.OTT.Trade
         private static List<Symbol> readSymbols()
         {
             List<Symbol> symbolsList = new List<Symbol>();
-            string filepath = sourceDirectory + "symbols.txt";
 
-            using (StreamReader rd = File.OpenText(filepath))
+            try
             {
-                while (!rd.EndOfStream)
-                {
-                    Symbol tmp = new Symbol();
-                    string str = rd.ReadLine();
-                    tmp.symbol = str.Split(';')[0];
-                    tmp.length = int.Parse(str.Split(';')[1]);
-                    tmp.percent = Decimal.Parse(str.Split(';')[2]);
-                    tmp.buyRatio = Decimal.Parse(str.Split(';')[3]);
-                    tmp.sellRatio = Decimal.Parse(str.Split(';')[4]);
-                    tmp.buyTrendSwitch = str.Split(';')[5] == "0" ? false : true;
-                    tmp.buyTrendRatio = Decimal.Parse(str.Split(';')[6]);
-                    tmp.sellTrendRatio = Decimal.Parse(str.Split(';')[7]);
-                    tmp.depositRatio = int.Parse(str.Split(';')[8]);
-                    tmp.priceRound = int.Parse(str.Split(';')[9]);
-                    tmp.quantityRound = int.Parse(str.Split(';')[10]);
-                    tmp.symbolCoin = str.Split(';')[11];
-                    symbolsList.Add(tmp);
-                }
-            }
+                string filepath = sourceDirectory + "symbols.txt";
 
-            return symbolsList;
+                using (StreamReader rd = File.OpenText(filepath))
+                {
+                    while (!rd.EndOfStream)
+                    {
+                        Symbol tmp = new Symbol();
+                        string str = rd.ReadLine();
+                        tmp.symbol = str.Split(';')[0];
+                        tmp.length = int.Parse(str.Split(';')[1]);
+                        tmp.percent = Decimal.Parse(str.Split(';')[2]);
+                        tmp.buyRatio = Decimal.Parse(str.Split(';')[3]);
+                        tmp.sellRatio = Decimal.Parse(str.Split(';')[4]);
+                        tmp.buyTrendSwitch = str.Split(';')[5] == "0" ? false : true;
+                        tmp.buyTrendRatio = Decimal.Parse(str.Split(';')[6]);
+                        tmp.sellTrendRatio = Decimal.Parse(str.Split(';')[7]);
+                        tmp.depositRatio = int.Parse(str.Split(';')[8]);
+                        tmp.priceRound = int.Parse(str.Split(';')[9]);
+                        tmp.quantityRound = int.Parse(str.Split(';')[10]);
+                        tmp.symbolCoin = str.Split(';')[11];
+                        symbolsList.Add(tmp);
+                    }
+                }
+
+                return symbolsList;
+            }
+            catch (Exception ex)
+            {
+                SendMessageFromTelegramBot(string.Format("Sembol listesi okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                WriteLog(ex.InnerException.Message);
+                return symbolsList;
+            }
         }
 
         private static List<Candlestick> readLastCandleSticks(List<Symbol> symbols)
         {
             List<Candlestick> candlestickList = new List<Candlestick>();
-            string filepath = string.Empty;
-            int lineNumber = 0;
-            string symbolCandleStick = string.Empty;
-            string lastCandleStickStr = string.Empty;
-            Candlestick lastCandleStick = new Candlestick();
 
-            foreach (var item in symbols)
+            try
             {
-                filepath = sourceDirectory + item.symbol + ".txt";
-                lineNumber = 0;
-                symbolCandleStick = string.Empty;
-                lastCandleStickStr = string.Empty;
-                lastCandleStick = new Candlestick();
+                string filepath = string.Empty;
+                int lineNumber = 0;
+                string symbolCandleStick = string.Empty;
+                string lastCandleStickStr = string.Empty;
+                Candlestick lastCandleStick = new Candlestick();
 
-                using (StreamReader rd = File.OpenText(filepath))
+                foreach (var item in symbols)
                 {
-                    symbolCandleStick = rd.ReadToEnd();
-                    lineNumber = symbolCandleStick.Split('\n').Length;
-                    lastCandleStickStr = symbolCandleStick.Split('\n')[lineNumber - 3];
-                    // Read Lines
-                    lastCandleStick.Symbol = item.symbol;
-                    lastCandleStick.OpenDateTime = DateTime.Parse(lastCandleStickStr.Split(';')[0]);
-                    lastCandleStick.Open = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[1]));
-                    lastCandleStick.High = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[2]));
-                    lastCandleStick.Low = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[3]));
-                    lastCandleStick.Close = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[4]));
-                    lastCandleStick.SupportLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[5]));
-                    lastCandleStick.OTTLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[6]));
-                    lastCandleStick.BuySignal = lastCandleStickStr.Split(';')[7] == "0" ? false : true;
-                    lastCandleStick.SellSignal = lastCandleStickStr.Split(';')[8] == "0" ? false : true;
-                    candlestickList.Add(lastCandleStick);
+                    filepath = sourceDirectory + item.symbol + ".txt";
+                    lineNumber = 0;
+                    symbolCandleStick = string.Empty;
+                    lastCandleStickStr = string.Empty;
+                    lastCandleStick = new Candlestick();
 
-                    if (lastCandleStick.BuySignal)
-                        SendMessageFromTelegramBot(string.Format("{0} için OTT tarafından AL sinyali gelmiştir", item.symbol.ToUpper()));
-                    else if (lastCandleStick.SellSignal)
-                        SendMessageFromTelegramBot(string.Format("{0} için OTT tarafından SAT sinyali gelmiştir", item.symbol.ToUpper()));
+                    using (StreamReader rd = File.OpenText(filepath))
+                    {
+                        symbolCandleStick = rd.ReadToEnd();
+                        lineNumber = symbolCandleStick.Split('\n').Length;
+                        lastCandleStickStr = symbolCandleStick.Split('\n')[lineNumber - 3];
+                        // Read Lines
+                        lastCandleStick.Symbol = item.symbol;
+                        lastCandleStick.OpenDateTime = DateTime.Parse(lastCandleStickStr.Split(';')[0]);
+                        lastCandleStick.Open = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[1]));
+                        lastCandleStick.High = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[2]));
+                        lastCandleStick.Low = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[3]));
+                        lastCandleStick.Close = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[4]));
+                        lastCandleStick.SupportLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[5]));
+                        lastCandleStick.OTTLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[6]));
+                        lastCandleStick.BuySignal = lastCandleStickStr.Split(';')[7] == "0" ? false : true;
+                        lastCandleStick.SellSignal = lastCandleStickStr.Split(';')[8] == "0" ? false : true;
+                        candlestickList.Add(lastCandleStick);
+
+                        if (lastCandleStick.BuySignal)
+                            SendMessageFromTelegramBot(string.Format("{0} için OTT tarafından AL sinyali gelmiştir", item.symbol.ToUpper()));
+                        else if (lastCandleStick.SellSignal)
+                            SendMessageFromTelegramBot(string.Format("{0} için OTT tarafından SAT sinyali gelmiştir", item.symbol.ToUpper()));
+                    }
                 }
-            }
 
-            return candlestickList;
+                return candlestickList;
+            }
+            catch (Exception ex)
+            {
+                SendMessageFromTelegramBot(string.Format("1 saat öncenin mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                WriteLog(ex.InnerException.Message);
+                return candlestickList;
+            }
         }
 
         private static List<Candlestick> readCurrentCandleSticks(List<Symbol> symbols)
         {
             List<Candlestick> candlestickList = new List<Candlestick>();
-            string filepath = string.Empty;
-            int lineNumber = 0;
-            string symbolCandleStick = string.Empty;
-            string lastCandleStickStr = string.Empty;
-            Candlestick lastCandleStick = new Candlestick();
 
-            foreach (var item in symbols)
+            try
             {
-                filepath = sourceDirectory + item.symbol + ".txt";
-                lineNumber = 0;
-                symbolCandleStick = string.Empty;
-                lastCandleStickStr = string.Empty;
-                lastCandleStick = new Candlestick();
+                string filepath = string.Empty;
+                int lineNumber = 0;
+                string symbolCandleStick = string.Empty;
+                string lastCandleStickStr = string.Empty;
+                Candlestick lastCandleStick = new Candlestick();
 
-                using (StreamReader rd = File.OpenText(filepath))
+                foreach (var item in symbols)
                 {
-                    symbolCandleStick = rd.ReadToEnd();
-                    lineNumber = symbolCandleStick.Split('\n').Length;
-                    lastCandleStickStr = symbolCandleStick.Split('\n')[lineNumber - 2];
-                    // Read Lines
-                    lastCandleStick.Symbol = item.symbol;
-                    lastCandleStick.OpenDateTime = DateTime.Parse(lastCandleStickStr.Split(';')[0]);
-                    lastCandleStick.Open = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[1]));
-                    lastCandleStick.High = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[2]));
-                    lastCandleStick.Low = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[3]));
-                    lastCandleStick.Close = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[4]));
-                    lastCandleStick.SupportLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[5]));
-                    lastCandleStick.OTTLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[6]));
-                    lastCandleStick.BuySignal = lastCandleStickStr.Split(';')[7] == "0" ? false : true;
-                    lastCandleStick.SellSignal = lastCandleStickStr.Split(';')[8] == "0" ? false : true;
-                    candlestickList.Add(lastCandleStick);
-                }
-            }
+                    filepath = sourceDirectory + item.symbol + ".txt";
+                    lineNumber = 0;
+                    symbolCandleStick = string.Empty;
+                    lastCandleStickStr = string.Empty;
+                    lastCandleStick = new Candlestick();
 
-            return candlestickList;
+                    using (StreamReader rd = File.OpenText(filepath))
+                    {
+                        symbolCandleStick = rd.ReadToEnd();
+                        lineNumber = symbolCandleStick.Split('\n').Length;
+                        lastCandleStickStr = symbolCandleStick.Split('\n')[lineNumber - 2];
+                        // Read Lines
+                        lastCandleStick.Symbol = item.symbol;
+                        lastCandleStick.OpenDateTime = DateTime.Parse(lastCandleStickStr.Split(';')[0]);
+                        lastCandleStick.Open = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[1]));
+                        lastCandleStick.High = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[2]));
+                        lastCandleStick.Low = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[3]));
+                        lastCandleStick.Close = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[4]));
+                        lastCandleStick.SupportLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[5]));
+                        lastCandleStick.OTTLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[6]));
+                        lastCandleStick.BuySignal = lastCandleStickStr.Split(';')[7] == "0" ? false : true;
+                        lastCandleStick.SellSignal = lastCandleStickStr.Split(';')[8] == "0" ? false : true;
+                        candlestickList.Add(lastCandleStick);
+                    }
+                }
+
+                return candlestickList;
+            }
+            catch (Exception ex)
+            {
+                SendMessageFromTelegramBot(string.Format("Anlık mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                WriteLog(ex.InnerException.Message);
+                return candlestickList;
+            }
         }
 
         private static void calculateAvailableAmount(List<Symbol> symbols, List<Balance> myBalances, List<Candlestick> candlestickList)
         {
-            Candlestick myCurrentCandlestickList = new Candlestick();
-            Balance myCurrentBalance = new Balance();
-            Balance myCurrentUSDTBalance = new Balance();
-            decimal myCurrentBalanceAmount = 0;
-            decimal myCurrentUSDTBalanceAmount = 0;
-            decimal idleDepositRatio = 0;
-            decimal idleUSDTBalance = 0;
-            decimal symbolUSDTBalanceCount = 0;
-            decimal addedAvailableAmount = 0;
-            decimal finalAvailableAmount = 0;
-
-            foreach (var item in symbols)
+            try
             {
-                myCurrentBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
-                myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
-                myCurrentCandlestickList = candlestickList.FirstOrDefault(i => i.Symbol == item.symbol);
+                Candlestick myCurrentCandlestickList = new Candlestick();
+                Balance myCurrentBalance = new Balance();
+                Balance myCurrentUSDTBalance = new Balance();
+                decimal myCurrentBalanceAmount = 0;
+                decimal myCurrentUSDTBalanceAmount = 0;
+                decimal idleDepositRatio = 0;
+                decimal idleUSDTBalance = 0;
+                decimal symbolUSDTBalanceCount = 0;
+                decimal addedAvailableAmount = 0;
+                decimal finalAvailableAmount = 0;
 
-                // Calculate Available Amount
-                if (myCurrentBalance != null && myCurrentUSDTBalance != null)
+                foreach (var item in symbols)
                 {
-                    myCurrentBalanceAmount = (myCurrentBalance.Free + myCurrentBalance.Locked) * myCurrentCandlestickList.Close;
-                    myCurrentUSDTBalanceAmount = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * item.depositRatio) / 100;
+                    myCurrentBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
+                    myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
+                    myCurrentCandlestickList = candlestickList.FirstOrDefault(i => i.Symbol == item.symbol);
 
-                    if (myCurrentBalanceAmount < 10.02M)
+                    // Calculate Available Amount
+                    if (myCurrentBalance != null && myCurrentUSDTBalance != null)
                     {
+                        myCurrentBalanceAmount = (myCurrentBalance.Free + myCurrentBalance.Locked) * myCurrentCandlestickList.Close;
+                        myCurrentUSDTBalanceAmount = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * item.depositRatio) / 100;
+
+                        if (myCurrentBalanceAmount < 10.02M)
+                        {
+                            mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = myCurrentUSDTBalanceAmount);
+                            symbolUSDTBalanceCount++;
+                        }
+                        else
+                        {
+                            mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = 0);
+                            idleDepositRatio += item.depositRatio;
+                        }
+                    }
+                    else if (myCurrentBalance == null)
+                    {
+                        myCurrentUSDTBalanceAmount = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * item.depositRatio) / 100;
                         mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = myCurrentUSDTBalanceAmount);
                         symbolUSDTBalanceCount++;
                     }
-                    else
+                }
+
+                idleUSDTBalance = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * idleDepositRatio) / 100;
+
+                foreach (var item2 in symbols)
+                {
+                    if (item2.availableAmount > 0)
                     {
-                        mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = 0);
-                        idleDepositRatio += item.depositRatio;
+                        addedAvailableAmount = Math.Round(idleUSDTBalance / symbolUSDTBalanceCount, 2);
+                        finalAvailableAmount = item2.availableAmount + addedAvailableAmount;
+
+                        if (finalAvailableAmount > 10.02M)
+                            mySembols.Where(i => i.symbolCoin == item2.symbolCoin).ToList().ForEach(c => c.availableAmount = c.availableAmount + addedAvailableAmount);
+                        else
+                            mySembols.Where(i => i.symbolCoin == item2.symbolCoin).ToList().ForEach(c => c.availableAmount = 0);
                     }
                 }
-                else if (myCurrentBalance == null)
-                {
-                    myCurrentUSDTBalanceAmount = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * item.depositRatio) / 100;
-                    mySembols.Where(i => i.symbolCoin == item.symbolCoin).ToList().ForEach(c => c.availableAmount = myCurrentUSDTBalanceAmount);
-                    symbolUSDTBalanceCount++;
-                }
             }
-
-            idleUSDTBalance = (((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked) - 2) * idleDepositRatio) / 100;
-
-            foreach (var item2 in symbols)
+            catch (Exception ex)
             {
-                if (item2.availableAmount > 0)
-                {
-                    addedAvailableAmount = Math.Round(idleUSDTBalance / symbolUSDTBalanceCount, 2);
-                    finalAvailableAmount = item2.availableAmount + addedAvailableAmount;
-
-                    if (finalAvailableAmount > 10.02M)
-                        mySembols.Where(i => i.symbolCoin == item2.symbolCoin).ToList().ForEach(c => c.availableAmount = c.availableAmount + addedAvailableAmount);
-                    else
-                        mySembols.Where(i => i.symbolCoin == item2.symbolCoin).ToList().ForEach(c => c.availableAmount = 0);
-                }
+                SendMessageFromTelegramBot(string.Format("Kullanılabilir USDT bakiyelerin hesaplanması sırasında hata oluştu. Hata: {0}", ex.InnerException.Message));
+                WriteLog(ex.InnerException.Message);
             }
         }
 
         private static List<Balance> getBalances(List<Symbol> mySembols)
         {
-            // Get Acount Infos
-            var accountInfos = binanceClient.GetAccountInfo().Result;
             var tempBalances = new List<Balance>();
-            var myCurrentSymbol = new Symbol();
 
-            tempBalances = accountInfos.Balances.Where(i => i.Locked != 0 || i.Free != 0).ToList();
-
-            foreach (var item in tempBalances)
+            try
             {
-                myCurrentSymbol = mySembols.FirstOrDefault(i => i.symbolCoin == item.Asset);
+                // Get Acount Infos
+                var accountInfos = binanceClient.GetAccountInfo().Result;
+                var myCurrentSymbol = new Symbol();
 
-                if (myCurrentSymbol != null)
+                tempBalances = accountInfos.Balances.Where(i => i.Locked != 0 || i.Free != 0).ToList();
+
+                foreach (var item in tempBalances)
                 {
-                    item.Free = Math.Round(item.Free, myCurrentSymbol.quantityRound);
-                    item.Locked = Math.Round(item.Locked, myCurrentSymbol.quantityRound);
-                }
-            }
+                    myCurrentSymbol = mySembols.FirstOrDefault(i => i.symbolCoin == item.Asset);
 
-            return tempBalances;
+                    if (myCurrentSymbol != null)
+                    {
+                        item.Free = Math.Round(item.Free, myCurrentSymbol.quantityRound);
+                        item.Locked = Math.Round(item.Locked, myCurrentSymbol.quantityRound);
+                    }
+                }
+
+                return tempBalances;
+            }
+            catch (Exception ex)
+            {
+
+                SendMessageFromTelegramBot(string.Format("Coinlerin bakiyelerini çekerken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                WriteLog(ex.InnerException.Message);
+                return tempBalances;
+            }
         }
 
         private static List<Order> getCurrentOpenOrders(List<Symbol> symbols)
@@ -227,39 +276,58 @@ namespace Binance.OTT.Trade
             List<Order> myOpenOrders = new List<Order>();
             List<Order> myCurrentOpenOrders = new List<Order>();
 
-            foreach (var item in symbols)
+            try
             {
-                myCurrentOpenOrders = binanceClient.GetCurrentOpenOrders(item.symbol).Result.ToList();
+                foreach (var item in symbols)
+                {
+                    myCurrentOpenOrders = binanceClient.GetCurrentOpenOrders(item.symbol).Result.ToList();
 
-                if (myCurrentOpenOrders != null && myCurrentOpenOrders.Count() > 0)
-                    myOpenOrders.AddRange(myCurrentOpenOrders);
+                    if (myCurrentOpenOrders != null && myCurrentOpenOrders.Count() > 0)
+                        myOpenOrders.AddRange(myCurrentOpenOrders);
+                }
+
+                return myOpenOrders;
             }
-
-            return myOpenOrders;
+            catch (Exception ex)
+            {
+                SendMessageFromTelegramBot(string.Format("Açık emirler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                WriteLog(ex.InnerException.Message);
+                return myOpenOrders;
+            }
         }
 
         private static List<Order> getLastTrades(List<Symbol> symbols)
         {
-            List<Binance.API.Csharp.Client.Models.Account.Trade> myLastTrades = new List<API.Csharp.Client.Models.Account.Trade>();
             List<Order> myCurrentOrder = new List<Order>();
             List<Order> myLastFilledOrders = new List<Order>();
             Order myLastOrder = new Order();
 
-            foreach (var item in symbols)
+            try
             {
-                myLastOrder = new Order();
-                myCurrentOrder = binanceClient.GetAllOrders(item.symbol).Result.ToList();
+                List<Binance.API.Csharp.Client.Models.Account.Trade> myLastTrades = new List<API.Csharp.Client.Models.Account.Trade>();
 
-                if (myCurrentOrder != null && myCurrentOrder.Count() > 0)
+                foreach (var item in symbols)
                 {
-                    myLastOrder = myCurrentOrder.LastOrDefault(i => i.Status == "FILLED");
+                    myLastOrder = new Order();
+                    myCurrentOrder = binanceClient.GetAllOrders(item.symbol).Result.ToList();
 
-                    if (myLastOrder != null)
-                        myLastFilledOrders.Add(myLastOrder);
+                    if (myCurrentOrder != null && myCurrentOrder.Count() > 0)
+                    {
+                        myLastOrder = myCurrentOrder.LastOrDefault(i => i.Status == "FILLED");
+
+                        if (myLastOrder != null)
+                            myLastFilledOrders.Add(myLastOrder);
+                    }
                 }
-            }
 
-            return myLastFilledOrders;
+                return myLastFilledOrders;
+            }
+            catch (Exception ex)
+            {
+                SendMessageFromTelegramBot(string.Format("Son gerçekleşen tradeler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                WriteLog(ex.InnerException.Message);
+                return myLastFilledOrders;
+            }
         }
 
         private static void SendMessageFromTelegramBot(string message)
@@ -289,52 +357,47 @@ namespace Binance.OTT.Trade
 
         public static async Task TradeAsync()
         {
+            List<Candlestick> myCandlesticks = new List<Candlestick>();
+            List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
+            List<Balance> myBalances = new List<Balance>();
+            Order myCurrentOpenOrder = new Order();
+            Balance myCurrentUSDTBalance = new Balance();
+            Balance myCurrentCoinBalance = new Balance();
+            Order myCurrentLastTrade = new Order();
+            Candlestick myCurrentCandleStick = new Candlestick();
+            Candlestick myAvailableCurrentCandleStick = new Candlestick();
+            NewOrder myNewOrder = new NewOrder();
+            CanceledOrder myCancelOrder = new CanceledOrder();
+            decimal buyPrice = 0;
+            decimal buyQuantity = 0;
+            decimal orderAmount = 0;
+            decimal sellPrice = 0;
+            decimal sellQuantity = 0;
+            decimal availableBuyAmount = 0;
+            decimal currentCoinUSDTAmount = 0;
+            decimal currentCoinAmount = 0;
+            long orderId = 0;
+
+            // Read Symbols
+            mySembols = readSymbols();
+
+            // Get Balances
+            myBalances = getBalances(mySembols);
+
+            // Read CandleSticks
+            myCandlesticks = readLastCandleSticks(mySembols);
+            myAvailableCandlesticks = readCurrentCandleSticks(mySembols);
+
+            // Calculate Available Amount
+            calculateAvailableAmount(mySembols, myBalances, myAvailableCandlesticks);
+
+            // Get Open Orders
+            List<Order> myOpenOrders = getCurrentOpenOrders(mySembols);
+
+            // Get Account Last Trades
+            List<Order> myLastTrades = getLastTrades(mySembols);
             try
             {
-                Symbol myLastSymbol = new Symbol();
-                List<Candlestick> myCandlesticks = new List<Candlestick>();
-                List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
-                List<Balance> myBalances = new List<Balance>();
-                Order myCurrentOpenOrder = new Order();
-                Balance myCurrentUSDTBalance = new Balance();
-                Balance myCurrentCoinBalance = new Balance();
-                Order myCurrentLastTrade = new Order();
-                Candlestick myCurrentCandleStick = new Candlestick();
-                Candlestick myAvailableCurrentCandleStick = new Candlestick();
-                NewOrder myNewOrder = new NewOrder();
-                CanceledOrder myCancelOrder = new CanceledOrder();
-                decimal buyPrice = 0;
-                decimal buyQuantity = 0;
-                decimal orderAmount = 0;
-                decimal sellPrice = 0;
-                decimal sellQuantity = 0;
-                decimal availableBuyAmount = 0;
-                decimal currentCoinUSDTAmount = 0;
-                decimal currentCoinAmount = 0;
-                long orderId = 0;
-
-                // Read Symbols
-                mySembols = readSymbols();
-
-                // Get Balances
-                myBalances = getBalances(mySembols);
-
-                // Read CandleSticks
-                myCandlesticks = readLastCandleSticks(mySembols);
-                myAvailableCandlesticks = readCurrentCandleSticks(mySembols);
-
-                // Calculate Available Amount
-                calculateAvailableAmount(mySembols, myBalances, myAvailableCandlesticks);
-
-                // Get Open Orders
-                List<Order> myOpenOrders = getCurrentOpenOrders(mySembols);
-
-                // Get Account Last Trades
-                List<Order> myLastTrades = getLastTrades(mySembols);
-
-                // Get My Last Symbol
-                myLastSymbol = mySembols.LastOrDefault();
-
                 // USDT Balanace
                 myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
                 if (myCurrentUSDTBalance != null)
@@ -481,8 +544,8 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                SendMessageFromTelegramBot(string.Format("Trade işlemi sırasında hata oluşmuştır. Hata: {0}", ex.Message));
-                WriteLog(ex.Message);
+                SendMessageFromTelegramBot(string.Format("Trade işlemi sırasında hata oluşmuştır. Hata: {0}", ex.InnerException.Message));
+                WriteLog(ex.InnerException.Message);
             }
         }
     }
