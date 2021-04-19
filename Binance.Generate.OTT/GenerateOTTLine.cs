@@ -60,6 +60,7 @@ namespace Binance.Generate.OTT
             }
 
             apiClient = new ApiClient(environmentVariables.ApiKey, environmentVariables.ApiSecretKey);
+            binanceClient = new BinanceClient(apiClient);
         }
 
         private static void GetForOnePair(Symbol symbolItem)

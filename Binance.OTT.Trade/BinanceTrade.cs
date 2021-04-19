@@ -78,6 +78,7 @@ namespace Binance.OTT.Trade
             }
 
             apiClient = new ApiClient(environmentVariables.ApiKey, environmentVariables.ApiSecretKey);
+            binanceClient = new BinanceClient(apiClient);
         }
 
         private static List<Candlestick> readLastCandleSticks(List<Symbol> symbols)
