@@ -17,8 +17,7 @@ namespace Binance.Generate.OTT
         private const string sourceDirectory = @"C:\BinanceBot\";
         private const int limit = 1000;
         private static EnvironmentVariables environmentVariables = new EnvironmentVariables();
-        private static TelegramBotClient botClient = new TelegramBotClient(environmentVariables.TelegramToken);
-        private static ApiClient apiClient = new ApiClient(environmentVariables.ApiKey, environmentVariables.ApiSecretKey);
+        private static ApiClient apiClient = new ApiClient("", "");
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
 
         private static List<Symbol> readSymbols()
@@ -59,6 +58,8 @@ namespace Binance.Generate.OTT
                     environmentVariables.ChatId = str.Split(';')[3];
                 }
             }
+
+            apiClient = new ApiClient(environmentVariables.ApiKey, environmentVariables.ApiSecretKey);
         }
 
         private static void GetForOnePair(Symbol symbolItem)
@@ -303,6 +304,8 @@ namespace Binance.Generate.OTT
 
         private static void SendMessageFromTelegramBot(string message)
         {
+            TelegramBotClient botClient = new TelegramBotClient(environmentVariables.TelegramToken);
+
             botClient.SendTextMessageAsync(environmentVariables.ChatId, message);
         }
 
