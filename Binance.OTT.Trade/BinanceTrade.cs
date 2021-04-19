@@ -524,7 +524,7 @@ namespace Binance.OTT.Trade
 
                             myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
-                            sellQuantity = Math.Round(myCurrentCoinBalance.Locked - (decimal)Math.Pow(10, (item.quantityRound * -1)), item.quantityRound);
+                            sellQuantity = Math.Round((myCurrentCoinBalance.Free + myCurrentCoinBalance.Locked) - (decimal)Math.Pow(10, (item.quantityRound * -1)), item.quantityRound);
 
                             myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                             orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
