@@ -15,23 +15,11 @@ namespace Binance.Generate.OTT
     public static class GenerateOTTLine
     {
         private const string sourceDirectory = @"C:\BinanceBot\";
-        private const string apiKey = "srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej";
-        private const string apiSecret = "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj";
         private const int limit = 1000;
-        private static TelegramBotClient botClient = new TelegramBotClient("1724957087:AAH0ByKhfMJIGPP8JI51oJMqCh9HbwwmRrU");
-        private static ApiClient apiClient = new ApiClient(apiKey, apiSecret);
+        private static EnvironmentVariables environmentVariables = new EnvironmentVariables();
+        private static TelegramBotClient botClient = new TelegramBotClient(environmentVariables.TelegramToken);
+        private static ApiClient apiClient = new ApiClient(environmentVariables.ApiKey, environmentVariables.ApiSecretKey);
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
-
-        public static void GenerateOTT()
-        {
-            List<Symbol> symbolsList = readSymbols();
-            SendMessageFromTelegramBot(string.Format("OTTLine Generate için tüm Symboller dosyadan okunmuştur"));
-
-            foreach (var item in symbolsList)
-            {
-                GetForOnePair(item);
-            }
-        }
 
         private static List<Symbol> readSymbols()
         {
@@ -51,7 +39,26 @@ namespace Binance.Generate.OTT
                 }
             }
 
+            SendMessageFromTelegramBot(string.Format("OTTLine Generate için tüm Symboller dosyadan okunmuştur"));
+
             return symbolsList;
+        }
+
+        private static void readEnvironmentVariables()
+        {
+            string filepath = sourceDirectory + "environment_variables.txt";
+
+            using (StreamReader rd = File.OpenText(filepath))
+            {
+                while (!rd.EndOfStream)
+                {
+                    string str = rd.ReadLine();
+                    environmentVariables.ApiKey = str.Split(';')[0];
+                    environmentVariables.ApiSecretKey = str.Split(';')[1];
+                    environmentVariables.TelegramToken = str.Split(';')[2];
+                    environmentVariables.ChatId = str.Split(';')[3];
+                }
+            }
         }
 
         private static void GetForOnePair(Symbol symbolItem)
@@ -296,7 +303,22 @@ namespace Binance.Generate.OTT
 
         private static void SendMessageFromTelegramBot(string message)
         {
-            botClient.SendTextMessageAsync("-1001152564061", message);
+            botClient.SendTextMessageAsync(environmentVariables.ChatId, message);
+        }
+
+        public static void GenerateOTT()
+        {
+            // Read Environment Variables
+            readEnvironmentVariables();
+
+            // Read Symbols
+            List<Symbol> symbolsList = readSymbols();
+
+            // Generate OTT Lines
+            foreach (var item in symbolsList)
+            {
+                GetForOnePair(item);
+            }
         }
     }
 }

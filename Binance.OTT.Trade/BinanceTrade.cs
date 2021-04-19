@@ -16,10 +16,9 @@ namespace Binance.OTT.Trade
     public class BinanceTrade
     {
         private const string sourceDirectory = @"C:\BinanceBot\";
-        private const string apiKey = "srhEOc1oqMt4euGiUeVBseXk588iBD4mFUD0k3VcFQQiQdRlA1NvVxVY2x0weXej";
-        private const string apiSecret = "obd4UryGMEKgdvb9B84bKGrXxusQUEQ8nYFUba85xst02dq7FNRvdFMNZtze9RDj";
-        private static TelegramBotClient botClient = new TelegramBotClient("1724957087:AAH0ByKhfMJIGPP8JI51oJMqCh9HbwwmRrU");
-        private static ApiClient apiClient = new ApiClient(apiKey, apiSecret);
+        private static EnvironmentVariables environmentVariables = new EnvironmentVariables();
+        private static TelegramBotClient botClient = new TelegramBotClient(environmentVariables.TelegramToken);
+        private static ApiClient apiClient = new ApiClient(environmentVariables.ApiKey, environmentVariables.ApiSecretKey);
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
         private static List<Symbol> mySembols = new List<Symbol>();
 
@@ -332,7 +331,7 @@ namespace Binance.OTT.Trade
 
         private static void SendMessageFromTelegramBot(string message)
         {
-            botClient.SendTextMessageAsync("-1001152564061", message);
+            botClient.SendTextMessageAsync(environmentVariables.ChatId, message);
         }
 
         private static void WriteLog(string LogMessage)
@@ -351,6 +350,23 @@ namespace Binance.OTT.Trade
                 using (StreamWriter sw = File.AppendText(filepath))
                 {
                     sw.WriteLine(LogMessage);
+                }
+            }
+        }
+
+        private static void readEnvironmentVariables()
+        {
+            string filepath = sourceDirectory + "environment_variables.txt";
+
+            using (StreamReader rd = File.OpenText(filepath))
+            {
+                while (!rd.EndOfStream)
+                {
+                    string str = rd.ReadLine();
+                    environmentVariables.ApiKey = str.Split(';')[0];
+                    environmentVariables.ApiSecretKey = str.Split(';')[1];
+                    environmentVariables.TelegramToken = str.Split(';')[2];
+                    environmentVariables.ChatId = str.Split(';')[3];
                 }
             }
         }
@@ -377,6 +393,9 @@ namespace Binance.OTT.Trade
             decimal currentCoinUSDTAmount = 0;
             decimal currentCoinAmount = 0;
             long orderId = 0;
+
+            // Read Environment Variables
+            readEnvironmentVariables();
 
             // Read Symbols
             mySembols = readSymbols();
