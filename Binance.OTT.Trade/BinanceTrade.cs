@@ -332,7 +332,7 @@ namespace Binance.OTT.Trade
 
         private static void SendMessageFromTelegramBot(string message)
         {
-            botClient.SendTextMessageAsync("-535329225", message);
+            botClient.SendTextMessageAsync("-1001152564061", message);
         }
 
         private static void WriteLog(string LogMessage)

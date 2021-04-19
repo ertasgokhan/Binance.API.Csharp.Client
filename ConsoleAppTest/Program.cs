@@ -13,9 +13,9 @@ namespace ConsoleAppTest
         {
             DateTime startTime = DateTime.Now;
 
-            // GenerateOTTLine.GenerateOTT();
+            GenerateOTTLine.GenerateOTT();
 
-            await BinanceTrade.TradeAsync();
+            // await BinanceTrade.TradeAsync();
 
             DateTime endTime = DateTime.Now;
 
