@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Binance.API.Csharp.Client\Binance.API.Csharp.Client.csproj" />
+    <ProjectReference Include="..\Binance.UtilitiesLib\Binance.UtilitiesLib.csproj" />
   </ItemGroup>
 
   <ItemGroup>

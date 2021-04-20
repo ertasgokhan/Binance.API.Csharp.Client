@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Binance.API.Csharp.Client.Domain\Binance.API.Csharp.Client.Domain.csproj" />
     <ProjectReference Include="..\Binance.API.Csharp.Client.Models\Binance.API.Csharp.Client.Models.csproj" />
     <ProjectReference Include="..\Binance.API.Csharp.Client\Binance.API.Csharp.Client.csproj" />
+    <ProjectReference Include="..\Binance.UtilitiesLib\Binance.UtilitiesLib.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,7 @@
 ﻿using Binance.API.Csharp.Client;
 using Binance.API.Csharp.Client.Models.Enums;
 using Binance.API.Csharp.Client.Models.Market;
+using Binance.UtilitiesLib;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -54,14 +55,14 @@ namespace Binance.Generate.OTT
                 while (!rd.EndOfStream)
                 {
                     string str = rd.ReadLine();
-                    environmentVariables.ApiKey = str.Split(';')[0];
-                    environmentVariables.ApiSecretKey = str.Split(';')[1];
-                    environmentVariables.TelegramToken = str.Split(';')[2];
-                    environmentVariables.ChatId = str.Split(';')[3];
+                    environmentVariables.x = StringCipher.Decrypt(str.Split(';')[0]);
+                    environmentVariables.y = StringCipher.Decrypt(str.Split(';')[1]);
+                    environmentVariables.z = StringCipher.Decrypt(str.Split(';')[2]);
+                    environmentVariables.w = StringCipher.Decrypt(str.Split(';')[3]);
                 }
             }
 
-            apiClient = new ApiClient(environmentVariables.ApiKey, environmentVariables.ApiSecretKey);
+            apiClient = new ApiClient(environmentVariables.x, environmentVariables.y);
             binanceClient = new BinanceClient(apiClient);
         }
 
@@ -307,9 +308,9 @@ namespace Binance.Generate.OTT
 
         private static void SendMessageFromTelegramBot(string message)
         {
-            TelegramBotClient botClient = new TelegramBotClient(environmentVariables.TelegramToken);
+            TelegramBotClient botClient = new TelegramBotClient(environmentVariables.z);
 
-            botClient.SendTextMessageAsync(environmentVariables.ChatId, message);
+            botClient.SendTextMessageAsync(environmentVariables.w, message);
         }
 
         public static void GenerateOTT()
