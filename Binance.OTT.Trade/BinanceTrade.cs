@@ -10,6 +10,7 @@ using System.Linq;
 using Telegram.Bot;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using System.Globalization;
 
 namespace Binance.OTT.Trade
 {
@@ -377,6 +378,7 @@ namespace Binance.OTT.Trade
 
         public static async Task TradeAsync()
         {
+            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.GetCultureInfo("tr-TR");
             List<Candlestick> myCandlesticks = new List<Candlestick>();
             List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
             List<Balance> myBalances = new List<Balance>();

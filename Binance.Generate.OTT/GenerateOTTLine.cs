@@ -3,6 +3,7 @@ using Binance.API.Csharp.Client.Models.Enums;
 using Binance.API.Csharp.Client.Models.Market;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -312,6 +313,8 @@ namespace Binance.Generate.OTT
 
         public static void GenerateOTT()
         {
+            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.GetCultureInfo("tr-TR");
+
             // Read Environment Variables
             readEnvironmentVariables();
 
