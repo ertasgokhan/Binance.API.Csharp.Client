@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
+using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 
@@ -313,7 +314,7 @@ namespace Binance.Generate.OTT
 
         public static void GenerateOTT()
         {
-            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.GetCultureInfo("tr-TR");
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
 
             // Read Environment Variables
             readEnvironmentVariables();
