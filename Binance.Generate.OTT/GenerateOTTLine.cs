@@ -305,9 +305,9 @@ namespace Binance.Generate.OTT
 
         private static void SendMessageFromTelegramBot(string message)
         {
-            //TelegramBotClient botClient = new TelegramBotClient(environmentVariables.TelegramToken);
+            TelegramBotClient botClient = new TelegramBotClient(environmentVariables.TelegramToken);
 
-            //botClient.SendTextMessageAsync(environmentVariables.ChatId, message);
+            botClient.SendTextMessageAsync(environmentVariables.ChatId, message);
         }
 
         public static void GenerateOTT()
