@@ -353,9 +353,9 @@ namespace Binance.OTT.Trade
             }
         }
 
-        private static void SendMessageFromTelegramBot(string message)
+        private static async void SendMessageFromTelegramBot(string message)
         {
-            botClient.SendTextMessageAsync(environmentVariables.w, message);
+            await botClient.SendTextMessageAsync(environmentVariables.w, message);
         }
 
         private static void WriteLog(string LogMessage)
