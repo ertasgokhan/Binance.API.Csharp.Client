@@ -9,13 +9,13 @@ namespace ConsoleAppTest
 {
     class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             DateTime startTime = DateTime.Now;
 
-            GenerateOTTLine.GenerateOTT();
+            await GenerateOTTLine.GenerateOTT();
 
-            BinanceTrade.TradeAsync();
+            await BinanceTrade.TradeAsync();
 
             DateTime endTime = DateTime.Now;
 

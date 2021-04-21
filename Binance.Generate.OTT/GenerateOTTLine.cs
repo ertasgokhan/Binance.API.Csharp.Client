@@ -24,7 +24,7 @@ namespace Binance.Generate.OTT
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
         private static TelegramBotClient botClient;
 
-        private static List<Symbol> readSymbols()
+        private static async Task<List<Symbol>> readSymbolsAsync()
         {
             List<Symbol> symbolsList = new List<Symbol>();
             string filepath = sourceDirectory + "symbols.txt";
@@ -42,7 +42,7 @@ namespace Binance.Generate.OTT
                 }
             }
 
-            SendMessageFromTelegramBot(string.Format("OTTLine Generate için tüm Symboller dosyadan okunmuştur"));
+            await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("OTTLine Generate için tüm Symboller dosyadan okunmuştur"));
 
             return symbolsList;
         }
@@ -68,7 +68,7 @@ namespace Binance.Generate.OTT
             botClient = new TelegramBotClient(environmentVariables.z);
         }
 
-        private static void GetForOnePair(Symbol symbolItem)
+        private static async void GetForOnePair(Symbol symbolItem)
         {
             try
             {
@@ -98,11 +98,11 @@ namespace Binance.Generate.OTT
                     sw.WriteLine(OTTLines);
                 }
 
-                SendMessageFromTelegramBot(string.Format("{0} için mum verileri başarıyla okunmuştur", symbol.ToUpper()));
+                await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("{0} için mum verileri başarıyla okunmuştur", symbol.ToUpper()));
             }
             catch (Exception ex)
             {
-                SendMessageFromTelegramBot(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ((System.IO.FileLoadException)ex.InnerException).Message));
+                await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ((System.IO.FileLoadException)ex.InnerException).Message));
                 WriteLog(((System.IO.FileLoadException)ex.InnerException).Message);
             }
         }
@@ -308,12 +308,7 @@ namespace Binance.Generate.OTT
             }
         }
 
-        private static async void SendMessageFromTelegramBot(string message)
-        {
-            await botClient.SendTextMessageAsync(environmentVariables.w, message);
-        }
-
-        public static void GenerateOTT()
+        public static async Task GenerateOTT()
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
 
@@ -321,7 +316,7 @@ namespace Binance.Generate.OTT
             readEnvironmentVariables();
 
             // Read Symbols
-            List<Symbol> symbolsList = readSymbols();
+            List<Symbol> symbolsList = await readSymbolsAsync();
 
             // Generate OTT Lines
             foreach (var item in symbolsList)
