@@ -23,6 +23,7 @@ namespace Binance.OTT.Trade
         private static ApiClient apiClient = new ApiClient("", "");
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
         private static List<Symbol> mySembols = new List<Symbol>();
+        private static TelegramBotClient botClient;
 
         private static List<Symbol> readSymbols()
         {
@@ -82,6 +83,7 @@ namespace Binance.OTT.Trade
 
             apiClient = new ApiClient(environmentVariables.x, environmentVariables.y);
             binanceClient = new BinanceClient(apiClient);
+            botClient = new TelegramBotClient(environmentVariables.z);
         }
 
         private static List<Candlestick> readLastCandleSticks(List<Symbol> symbols)
@@ -353,8 +355,6 @@ namespace Binance.OTT.Trade
 
         private static void SendMessageFromTelegramBot(string message)
         {
-            TelegramBotClient botClient = new TelegramBotClient(environmentVariables.z);
-
             botClient.SendTextMessageAsync(environmentVariables.w, message);
         }
 
@@ -378,7 +378,7 @@ namespace Binance.OTT.Trade
             }
         }
 
-        public static async Task TradeAsync()
+        public static async void TradeAsync()
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
             List<Candlestick> myCandlesticks = new List<Candlestick>();
