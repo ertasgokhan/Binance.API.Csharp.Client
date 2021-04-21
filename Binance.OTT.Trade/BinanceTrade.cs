@@ -466,6 +466,7 @@ namespace Binance.OTT.Trade
                     }
 
                     SendMessageFromTelegramBot(string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
+                    WriteLog(string.Format("{0} Mevcut {1} miktarı: {2} ({3} USDT)", DateTime.Now.ToString(), item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
 
                     // Case 1
                     if ((myCurrentLastTrade == null || (myCurrentLastTrade.Side == "SELL")) && myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && availableBuyAmount > 10.02M && myCurrentUSDTBalance.Free > availableBuyAmount)
