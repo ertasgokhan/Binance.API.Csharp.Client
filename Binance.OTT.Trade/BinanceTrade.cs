@@ -59,7 +59,7 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Sembol listesi okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Sembol listesi okunurken hata oluştu. Hata: {0}", ex.Message));
                 WriteLog(ex.InnerException.Message);
                 return symbolsList;
             }
