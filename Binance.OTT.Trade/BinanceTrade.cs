@@ -47,7 +47,7 @@ namespace Binance.OTT.Trade
                         tmp.buyTrendSwitch = str.Split(';')[5] == "0" ? false : true;
                         tmp.buyTrendRatio = Decimal.Parse(str.Split(';')[6]);
                         tmp.sellTrendRatio = Decimal.Parse(str.Split(';')[7]);
-                        tmp.depositRatio = int.Parse(str.Split(';')[8]);
+                        tmp.depositRatio = decimal.Parse(str.Split(';')[8]);
                         tmp.priceRound = int.Parse(str.Split(';')[9]);
                         tmp.quantityRound = int.Parse(str.Split(';')[10]);
                         tmp.symbolCoin = str.Split(';')[11];
@@ -418,6 +418,7 @@ namespace Binance.OTT.Trade
 
             // Get Account Last Trades
             List<Order> myLastTrades = await getLastTradesAsync(mySembols);
+
             try
             {
                 // USDT Balanace

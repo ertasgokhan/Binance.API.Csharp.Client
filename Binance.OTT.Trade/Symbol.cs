@@ -26,7 +26,7 @@ namespace Binance.OTT.Trade
 
         public decimal sellTrendRatio { get; set; }
 
-        public int depositRatio { get; set; }
+        public decimal depositRatio { get; set; }
 
         public decimal availableAmount { get; set; }
 
