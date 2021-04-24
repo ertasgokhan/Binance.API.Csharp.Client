@@ -17,17 +17,16 @@ namespace Binance.Generate.OTT
 {
     public static class GenerateOTTLine
     {
-        private static string sourceDirectory;
         private const int limit = 1000;
         private static EnvironmentVariables environmentVariables = new EnvironmentVariables();
         private static ApiClient apiClient = new ApiClient("", "");
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
         private static TelegramBotClient botClient;
 
-        private static async Task<List<Symbol>> readSymbolsAsync()
+        private static async Task<List<Symbol>> readSymbolsAsync(string account)
         {
             List<Symbol> symbolsList = new List<Symbol>();
-            string filepath = sourceDirectory + "symbols.txt";
+            string filepath = @"C:\TradeBot\" + account + "symbols.txt";
 
             using (StreamReader rd = File.OpenText(filepath))
             {
@@ -47,9 +46,9 @@ namespace Binance.Generate.OTT
             return symbolsList;
         }
 
-        private static void readEnvironmentVariables()
+        private static void readEnvironmentVariables(string account)
         {
-            string filepath = sourceDirectory + "environment_variables.txt";
+            string filepath = @"C:\TradeBot\" + account + "environment_variables.txt";
 
             using (StreamReader rd = File.OpenText(filepath))
             {
@@ -68,7 +67,7 @@ namespace Binance.Generate.OTT
             botClient = new TelegramBotClient(environmentVariables.z);
         }
 
-        private static async void GetForOnePair(Symbol symbolItem)
+        private static async void GetForOnePair(Symbol symbolItem, string account)
         {
             try
             {
@@ -76,7 +75,7 @@ namespace Binance.Generate.OTT
                 int Length = symbolItem.length;
                 decimal Percent = symbolItem.percent;
 
-                string filepath = sourceDirectory + symbol + ".txt";
+                string filepath = @"C:\TradeBot\" + account + symbol + ".txt";
                 string OTTLines = string.Empty;
                 List<Candlestick> candlestick = new List<Candlestick>();
                 List<Candlestick> tempCandlestick = new List<Candlestick>();
@@ -103,7 +102,7 @@ namespace Binance.Generate.OTT
             catch (Exception ex)
             {
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ((System.IO.FileLoadException)ex.InnerException).Message));
-                WriteLog(((System.IO.FileLoadException)ex.InnerException).Message);
+                WriteLog(((System.IO.FileLoadException)ex.InnerException).Message, account);
             }
         }
 
@@ -242,9 +241,9 @@ namespace Binance.Generate.OTT
             return OTTValues;
         }
 
-        private static void WriteLog(string LogMessage)
+        private static void WriteLog(string LogMessage, string account)
         {
-            string filepath = sourceDirectory + "\\Log.txt";
+            string filepath = @"C:\TradeBot\" + account + "\\Log.txt";
 
             if (!File.Exists(filepath))
             {
@@ -262,12 +261,12 @@ namespace Binance.Generate.OTT
             }
         }
 
-        private static void SendEmail(string symbol)
+        private static void SendEmail(string symbol, string account)
         {
             string toAddress = "";
             string fromPassword = "";
-            string filepath = sourceDirectory + "emails.txt";
-            string filepath2 = sourceDirectory + "emailsPass.txt";
+            string filepath = @"C:\TradeBot\" + account + "emails.txt";
+            string filepath2 = @"C:\TradeBot\" + account + "emailsPass.txt";
 
             using (StreamReader rd = File.OpenText(filepath))
             {
@@ -312,18 +311,16 @@ namespace Binance.Generate.OTT
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
 
-            sourceDirectory = @"C:\TradeBot\" + account;
-
             // Read Environment Variables
-            readEnvironmentVariables();
+            readEnvironmentVariables(account);
 
             // Read Symbols
-            List<Symbol> symbolsList = await readSymbolsAsync();
+            List<Symbol> symbolsList = await readSymbolsAsync(account);
 
             // Generate OTT Lines
             foreach (var item in symbolsList)
             {
-                GetForOnePair(item);
+                GetForOnePair(item, account);
             }
         }
     }

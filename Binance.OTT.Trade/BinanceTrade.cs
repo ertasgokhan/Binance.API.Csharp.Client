@@ -18,20 +18,19 @@ namespace Binance.OTT.Trade
 {
     public class BinanceTrade
     {
-        private static string sourceDirectory;
         private static EnvironmentVariables environmentVariables = new EnvironmentVariables();
         private static ApiClient apiClient = new ApiClient("", "");
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
         private static List<Symbol> mySembols = new List<Symbol>();
         private static TelegramBotClient botClient;
 
-        private static async Task<List<Symbol>> readSymbolsAsync()
+        private static async Task<List<Symbol>> readSymbolsAsync(string account)
         {
             List<Symbol> symbolsList = new List<Symbol>();
 
             try
             {
-                string filepath = sourceDirectory + "symbols.txt";
+                string filepath = @"C:\TradeBot\" + account + "symbols.txt";
 
                 using (StreamReader rd = File.OpenText(filepath))
                 {
@@ -60,14 +59,14 @@ namespace Binance.OTT.Trade
             catch (Exception ex)
             {
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Sembol listesi okunurken hata oluştu. Hata: {0}", ex.Message));
-                WriteLog(ex.InnerException.Message);
+                WriteLog(ex.InnerException.Message, account);
                 return symbolsList;
             }
         }
 
-        private static void readEnvironmentVariables()
+        private static void readEnvironmentVariables(string account)
         {
-            string filepath = sourceDirectory + "environment_variables.txt";
+            string filepath = @"C:\TradeBot\" + account + "environment_variables.txt";
 
             using (StreamReader rd = File.OpenText(filepath))
             {
@@ -86,7 +85,7 @@ namespace Binance.OTT.Trade
             botClient = new TelegramBotClient(environmentVariables.z);
         }
 
-        private static async Task<List<Candlestick>> readLastCandleSticksAsync(List<Symbol> symbols)
+        private static async Task<List<Candlestick>> readLastCandleSticksAsync(List<Symbol> symbols, string account)
         {
             List<Candlestick> candlestickList = new List<Candlestick>();
 
@@ -100,7 +99,7 @@ namespace Binance.OTT.Trade
 
                 foreach (var item in symbols)
                 {
-                    filepath = sourceDirectory + item.symbol + ".txt";
+                    filepath = @"C:\TradeBot\" + account + item.symbol + ".txt";
                     lineNumber = 0;
                     symbolCandleStick = string.Empty;
                     lastCandleStickStr = string.Empty;
@@ -136,12 +135,12 @@ namespace Binance.OTT.Trade
             catch (Exception ex)
             {
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("1 saat öncenin mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message);
+                WriteLog(ex.InnerException.Message, account);
                 return candlestickList;
             }
         }
 
-        private static async Task<List<Candlestick>> readCurrentCandleSticksAsync(List<Symbol> symbols)
+        private static async Task<List<Candlestick>> readCurrentCandleSticksAsync(List<Symbol> symbols, string account)
         {
             List<Candlestick> candlestickList = new List<Candlestick>();
 
@@ -155,7 +154,7 @@ namespace Binance.OTT.Trade
 
                 foreach (var item in symbols)
                 {
-                    filepath = sourceDirectory + item.symbol + ".txt";
+                    filepath = @"C:\TradeBot\" + account + item.symbol + ".txt";
                     lineNumber = 0;
                     symbolCandleStick = string.Empty;
                     lastCandleStickStr = string.Empty;
@@ -186,12 +185,12 @@ namespace Binance.OTT.Trade
             catch (Exception ex)
             {
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Anlık mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message);
+                WriteLog(ex.InnerException.Message, account);
                 return candlestickList;
             }
         }
 
-        private static async Task calculateAvailableAmountAsync(List<Symbol> symbols, List<Balance> myBalances, List<Candlestick> candlestickList)
+        private static async Task calculateAvailableAmountAsync(List<Symbol> symbols, List<Balance> myBalances, List<Candlestick> candlestickList, string account)
         {
             try
             {
@@ -256,11 +255,11 @@ namespace Binance.OTT.Trade
             catch (Exception ex)
             {
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Kullanılabilir USDT bakiyelerin hesaplanması sırasında hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message);
+                WriteLog(ex.InnerException.Message, account);
             }
         }
 
-        private static async Task<List<Balance>> getBalancesAsync(List<Symbol> mySembols)
+        private static async Task<List<Balance>> getBalancesAsync(List<Symbol> mySembols, string account)
         {
             var tempBalances = new List<Balance>();
 
@@ -289,12 +288,12 @@ namespace Binance.OTT.Trade
             {
 
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Coinlerin bakiyelerini çekerken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message);
+                WriteLog(ex.InnerException.Message, account);
                 return tempBalances;
             }
         }
 
-        private static async Task<List<Order>> getCurrentOpenOrdersAsync(List<Symbol> symbols)
+        private static async Task<List<Order>> getCurrentOpenOrdersAsync(List<Symbol> symbols, string account)
         {
             List<Order> myOpenOrders = new List<Order>();
             List<Order> myCurrentOpenOrders = new List<Order>();
@@ -314,12 +313,12 @@ namespace Binance.OTT.Trade
             catch (Exception ex)
             {
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Açık emirler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message);
+                WriteLog(ex.InnerException.Message, account);
                 return myOpenOrders;
             }
         }
 
-        private static async Task<List<Order>> getLastTradesAsync(List<Symbol> symbols)
+        private static async Task<List<Order>> getLastTradesAsync(List<Symbol> symbols, string account)
         {
             List<Order> myCurrentOrder = new List<Order>();
             List<Order> myLastFilledOrders = new List<Order>();
@@ -348,14 +347,14 @@ namespace Binance.OTT.Trade
             catch (Exception ex)
             {
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Son gerçekleşen tradeler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message);
+                WriteLog(ex.InnerException.Message, account);
                 return myLastFilledOrders;
             }
         }
 
-        private static void WriteLog(string LogMessage)
+        private static void WriteLog(string LogMessage, string account)
         {
-            string filepath = sourceDirectory + "\\Log.txt";
+            string filepath = @"C:\TradeBot\" + account + "\\Log.txt";
 
             if (!File.Exists(filepath))
             {
@@ -376,7 +375,6 @@ namespace Binance.OTT.Trade
         public static async Task TradeAsync(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
-            sourceDirectory = @"C:\TradeBot\" + account;
             List<Candlestick> myCandlesticks = new List<Candlestick>();
             List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
             List<Balance> myBalances = new List<Balance>();
@@ -399,26 +397,26 @@ namespace Binance.OTT.Trade
             long orderId = 0;
 
             // Read Environment Variables
-            readEnvironmentVariables();
+            readEnvironmentVariables(account);
 
             // Read Symbols
-            mySembols = await readSymbolsAsync();
+            mySembols = await readSymbolsAsync(account);
 
             // Get Balances
-            myBalances = await getBalancesAsync(mySembols);
+            myBalances = await getBalancesAsync(mySembols, account);
 
             // Read CandleSticks
-            myCandlesticks = await readLastCandleSticksAsync(mySembols);
-            myAvailableCandlesticks = await readCurrentCandleSticksAsync(mySembols);
+            myCandlesticks = await readLastCandleSticksAsync(mySembols, account);
+            myAvailableCandlesticks = await readCurrentCandleSticksAsync(mySembols, account);
 
             // Calculate Available Amount
-            await calculateAvailableAmountAsync(mySembols, myBalances, myAvailableCandlesticks);
+            await calculateAvailableAmountAsync(mySembols, myBalances, myAvailableCandlesticks, account);
 
             // Get Open Orders
-            List<Order> myOpenOrders = await getCurrentOpenOrdersAsync(mySembols);
+            List<Order> myOpenOrders = await getCurrentOpenOrdersAsync(mySembols, account);
 
             // Get Account Last Trades
-            List<Order> myLastTrades = await getLastTradesAsync(mySembols);
+            List<Order> myLastTrades = await getLastTradesAsync(mySembols, account);
 
             try
             {
@@ -431,7 +429,7 @@ namespace Binance.OTT.Trade
                 foreach (var item in mySembols)
                 {
                     // Get Account Info && Balances
-                    myBalances = await getBalancesAsync(mySembols);
+                    myBalances = await getBalancesAsync(mySembols, account);
                     myCurrentOpenOrder = myOpenOrders.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
                     myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
                     myCurrentCoinBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
@@ -463,7 +461,7 @@ namespace Binance.OTT.Trade
                     }
 
                     await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
-                    WriteLog(string.Format("{0} Mevcut {1} miktarı: {2} ({3} USDT)", DateTime.Now.ToString(), item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
+                    WriteLog(string.Format("{0} Mevcut {1} miktarı: {2} ({3} USDT)", DateTime.Now.ToString(), item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount), account);
 
                     // Case 1
                     if ((myCurrentLastTrade == null || (myCurrentLastTrade.Side == "SELL")) && myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && availableBuyAmount > 10.02M && myCurrentUSDTBalance.Free > availableBuyAmount)
@@ -570,7 +568,7 @@ namespace Binance.OTT.Trade
             catch (Exception ex)
             {
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("Trade işlemi sırasında hata oluşmuştır. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message);
+                WriteLog(ex.InnerException.Message, account);
             }
         }
     }
