@@ -18,7 +18,7 @@ namespace Binance.OTT.Trade
 {
     public class BinanceTrade
     {
-        private const string sourceDirectory = @"C:\BinanceBot\";
+        private static string sourceDirectory = @"C:\TradeBot\";
         private static EnvironmentVariables environmentVariables = new EnvironmentVariables();
         private static ApiClient apiClient = new ApiClient("", "");
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
@@ -373,9 +373,10 @@ namespace Binance.OTT.Trade
             }
         }
 
-        public static async Task TradeAsync()
+        public static async Task TradeAsync(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
+            sourceDirectory += account;
             List<Candlestick> myCandlesticks = new List<Candlestick>();
             List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
             List<Balance> myBalances = new List<Balance>();
