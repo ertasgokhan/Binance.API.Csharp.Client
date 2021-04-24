@@ -46,7 +46,7 @@ namespace Binance.Generate.OTT
             return symbolsList;
         }
 
-        private static void readEnvironmentVariables(string account)
+        private static async Task ReadEnvironmentVariables(string account)
         {
             string filepath = @"C:\TradeBot\" + account + "environment_variables.txt";
 
@@ -310,7 +310,7 @@ namespace Binance.Generate.OTT
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
 
             // Read Environment Variables
-            readEnvironmentVariables(account);
+            await ReadEnvironmentVariables(account);
 
             // Read Symbols
             List<Symbol> symbolsList = await readSymbolsAsync(account);

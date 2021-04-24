@@ -64,7 +64,7 @@ namespace Binance.OTT.Trade
             }
         }
 
-        private static void readEnvironmentVariables(string account)
+        private static async Task readEnvironmentVariables(string account)
         {
             string filepath = @"C:\TradeBot\" + account + "environment_variables.txt";
 
@@ -397,7 +397,7 @@ namespace Binance.OTT.Trade
             long orderId = 0;
 
             // Read Environment Variables
-            readEnvironmentVariables(account);
+            await readEnvironmentVariables(account);
 
             // Read Symbols
             mySembols = await readSymbolsAsync(account);
