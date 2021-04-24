@@ -67,7 +67,7 @@ namespace Binance.Generate.OTT
             botClient = new TelegramBotClient(environmentVariables.z);
         }
 
-        private static async void GetForOnePair(Symbol symbolItem, string account)
+        private static async Task GetForOnePair(Symbol symbolItem, string account)
         {
             try
             {
@@ -80,7 +80,7 @@ namespace Binance.Generate.OTT
                 List<Candlestick> candlestick = new List<Candlestick>();
                 List<Candlestick> tempCandlestick = new List<Candlestick>();
 
-                for (int i = -20; i < 0; i++)
+                for (int i = -15; i < 0; i++)
                 {
                     tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddMonths(i), DateTime.Now.AddMonths(i + 1), limit).Result.ToList();
 
@@ -320,7 +320,7 @@ namespace Binance.Generate.OTT
             // Generate OTT Lines
             foreach (var item in symbolsList)
             {
-                GetForOnePair(item, account);
+                await GetForOnePair(item, account);
             }
         }
     }
