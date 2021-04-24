@@ -23,8 +23,16 @@ namespace Binance.Generate.OTT
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
         private static TelegramBotClient botClient;
 
-        private static async Task<List<Symbol>> readSymbolsAsync(string account)
+        private static async void SendTelegramMessageAsync(string message)
         {
+            await botClient.SendTextMessageAsync(environmentVariables.w, message);
+        }
+
+        private static List<Symbol> readSymbolsAsync(string account)
+        {
+            // Read Environment Variables
+            ReadEnvironmentVariables(account);
+
             List<Symbol> symbolsList = new List<Symbol>();
             string filepath = @"C:\TradeBot\" + account + "symbols.txt";
 
@@ -41,12 +49,12 @@ namespace Binance.Generate.OTT
                 }
             }
 
-            await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("OTTLine Generate için tüm Symboller dosyadan okunmuştur"));
+            SendTelegramMessageAsync(string.Format("OTTLine Generate için tüm Symboller dosyadan okunmuştur"));
 
             return symbolsList;
         }
 
-        private static async Task ReadEnvironmentVariables(string account)
+        private static void ReadEnvironmentVariables(string account)
         {
             string filepath = @"C:\TradeBot\" + account + "environment_variables.txt";
 
@@ -67,10 +75,13 @@ namespace Binance.Generate.OTT
             botClient = new TelegramBotClient(environmentVariables.z);
         }
 
-        private static async Task GetForOnePair(Symbol symbolItem, string account)
+        private static void GetForOnePair(Symbol symbolItem, string account)
         {
             try
             {
+                // Read Environment Variables
+                ReadEnvironmentVariables(account);
+
                 string symbol = symbolItem.symbol;
                 int Length = symbolItem.length;
                 decimal Percent = symbolItem.percent;
@@ -96,10 +107,12 @@ namespace Binance.Generate.OTT
                     OTTLines = ReturnOTT(candlestick, Length, Percent);
                     sw.WriteLine(OTTLines);
                 }
+
+                SendTelegramMessageAsync(string.Format("{0} için mum verileri başarıyla okunmuştur", symbol.ToUpper()));
             }
             catch (Exception ex)
             {
-                await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ((System.IO.FileLoadException)ex.InnerException).Message));
+                SendTelegramMessageAsync(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ((System.IO.FileLoadException)ex.InnerException).Message));
                 WriteLog(((System.IO.FileLoadException)ex.InnerException).Message, account);
             }
         }
@@ -305,24 +318,17 @@ namespace Binance.Generate.OTT
             }
         }
 
-        public static async Task GenerateOTT(string account)
+        public static void GenerateOTT(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
 
-            // Read Environment Variables
-            await ReadEnvironmentVariables(account);
-
             // Read Symbols
-            List<Symbol> symbolsList = await readSymbolsAsync(account);
+            List<Symbol> symbolsList = readSymbolsAsync(account);
 
             // Generate OTT Lines
             foreach (var item in symbolsList)
             {
-                await ReadEnvironmentVariables(account);
-
-                await GetForOnePair(item, account);
-
-                await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("{0} için mum verileri başarıyla okunmuştur", item.symbol.ToUpper()));
+                GetForOnePair(item, account);
             }
         }
     }
