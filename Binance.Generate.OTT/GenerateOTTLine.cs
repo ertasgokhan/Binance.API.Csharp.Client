@@ -318,6 +318,8 @@ namespace Binance.Generate.OTT
             // Generate OTT Lines
             foreach (var item in symbolsList)
             {
+                await ReadEnvironmentVariables(account);
+
                 await GetForOnePair(item, account);
 
                 await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("{0} için mum verileri başarıyla okunmuştur", item.symbol.ToUpper()));
