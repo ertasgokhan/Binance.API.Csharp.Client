@@ -17,7 +17,7 @@ namespace Binance.Generate.OTT
 {
     public static class GenerateOTTLine
     {
-        private static string sourceDirectory = @"C:\TradeBot\";
+        private static string sourceDirectory;
         private const int limit = 1000;
         private static EnvironmentVariables environmentVariables = new EnvironmentVariables();
         private static ApiClient apiClient = new ApiClient("", "");
@@ -312,7 +312,7 @@ namespace Binance.Generate.OTT
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
 
-            sourceDirectory += account;
+            sourceDirectory = @"C:\TradeBot\" + account;
 
             // Read Environment Variables
             readEnvironmentVariables();
