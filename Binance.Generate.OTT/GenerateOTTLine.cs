@@ -96,8 +96,6 @@ namespace Binance.Generate.OTT
                     OTTLines = ReturnOTT(candlestick, Length, Percent);
                     sw.WriteLine(OTTLines);
                 }
-
-                await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("{0} için mum verileri başarıyla okunmuştur", symbol.ToUpper()));
             }
             catch (Exception ex)
             {
@@ -321,6 +319,8 @@ namespace Binance.Generate.OTT
             foreach (var item in symbolsList)
             {
                 await GetForOnePair(item, account);
+
+                await botClient.SendTextMessageAsync(environmentVariables.w, string.Format("{0} için mum verileri başarıyla okunmuştur", item.symbol.ToUpper()));
             }
         }
     }
