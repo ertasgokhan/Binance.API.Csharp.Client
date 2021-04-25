@@ -23,7 +23,7 @@ namespace Binance.Generate.OTT
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
         private static TelegramBotClient botClient;
 
-        private static async void SendTelegramMessageAsync(string message)
+        private static async Task SendTelegramMessageAsync(string message)
         {
             await botClient.SendTextMessageAsync(environmentVariables.w, message);
         }
