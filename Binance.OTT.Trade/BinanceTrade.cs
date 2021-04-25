@@ -45,7 +45,7 @@ namespace Binance.OTT.Trade
             botClient = new TelegramBotClient(environmentVariables.z);
         }
 
-        private static List<Symbol> readSymbolsAsync(string account)
+        private static async Task<List<Symbol>> readSymbolsAsync(string account)
         {
             // Read Environment Variables
             readEnvironmentVariables(account);
@@ -82,13 +82,13 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                SendTelegramMessageAsync(string.Format("Sembol listesi okunurken hata oluştu. Hata: {0}", ex.Message));
+                await SendTelegramMessageAsync(string.Format("Sembol listesi okunurken hata oluştu. Hata: {0}", ex.Message));
                 WriteLog(ex.InnerException.Message, account);
                 return symbolsList;
             }
         }
 
-        private static List<Candlestick> readLastCandleSticksAsync(List<Symbol> symbols, string account)
+        private static async Task<List<Candlestick>> readLastCandleSticksAsync(List<Symbol> symbols, string account)
         {
             // Read Environment Variables
             readEnvironmentVariables(account);
@@ -130,9 +130,9 @@ namespace Binance.OTT.Trade
                         candlestickList.Add(lastCandleStick);
 
                         if (lastCandleStick.BuySignal)
-                            SendTelegramMessageAsync(string.Format("{0} için OTT tarafından AL sinyali gelmiştir", item.symbol.ToUpper()));
+                            await SendTelegramMessageAsync(string.Format("{0} için OTT tarafından AL sinyali gelmiştir", item.symbol.ToUpper()));
                         else if (lastCandleStick.SellSignal)
-                            SendTelegramMessageAsync(string.Format("{0} için OTT tarafından SAT sinyali gelmiştir", item.symbol.ToUpper()));
+                            await SendTelegramMessageAsync(string.Format("{0} için OTT tarafından SAT sinyali gelmiştir", item.symbol.ToUpper()));
                     }
                 }
 
@@ -140,13 +140,13 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                SendTelegramMessageAsync(string.Format("1 saat öncenin mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                await SendTelegramMessageAsync(string.Format("1 saat öncenin mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
                 WriteLog(ex.InnerException.Message, account);
                 return candlestickList;
             }
         }
 
-        private static List<Candlestick> readCurrentCandleSticksAsync(List<Symbol> symbols, string account)
+        private static async Task<List<Candlestick>> readCurrentCandleSticksAsync(List<Symbol> symbols, string account)
         {
             // Read Environment Variables
             readEnvironmentVariables(account);
@@ -193,13 +193,13 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                SendTelegramMessageAsync(string.Format("Anlık mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                await SendTelegramMessageAsync(string.Format("Anlık mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
                 WriteLog(ex.InnerException.Message, account);
                 return candlestickList;
             }
         }
 
-        private static void calculateAvailableAmountAsync(List<Symbol> symbols, List<Balance> myBalances, List<Candlestick> candlestickList, string account)
+        private static async Task calculateAvailableAmountAsync(List<Symbol> symbols, List<Balance> myBalances, List<Candlestick> candlestickList, string account)
         {
             try
             {
@@ -266,12 +266,12 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                SendTelegramMessageAsync(string.Format("Kullanılabilir USDT bakiyelerin hesaplanması sırasında hata oluştu. Hata: {0}", ex.InnerException.Message));
+                await SendTelegramMessageAsync(string.Format("Kullanılabilir USDT bakiyelerin hesaplanması sırasında hata oluştu. Hata: {0}", ex.InnerException.Message));
                 WriteLog(ex.InnerException.Message, account);
             }
         }
 
-        private static List<Balance> getBalancesAsync(List<Symbol> mySembols, string account)
+        private static async Task<List<Balance>> getBalancesAsync(List<Symbol> mySembols, string account)
         {
             // Read Environment Variables
             readEnvironmentVariables(account);
@@ -301,13 +301,13 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                SendTelegramMessageAsync(string.Format("Coinlerin bakiyelerini çekerken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                await SendTelegramMessageAsync(string.Format("Coinlerin bakiyelerini çekerken hata oluştu. Hata: {0}", ex.InnerException.Message));
                 WriteLog(ex.InnerException.Message, account);
                 return tempBalances;
             }
         }
 
-        private static List<Order> getCurrentOpenOrdersAsync(List<Symbol> symbols, string account)
+        private static async Task<List<Order>> getCurrentOpenOrdersAsync(List<Symbol> symbols, string account)
         {
             // Read Environment Variables
             readEnvironmentVariables(account);
@@ -329,13 +329,13 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                SendTelegramMessageAsync(string.Format("Açık emirler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                await SendTelegramMessageAsync(string.Format("Açık emirler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
                 WriteLog(ex.InnerException.Message, account);
                 return myOpenOrders;
             }
         }
 
-        private static List<Order> getLastTradesAsync(List<Symbol> symbols, string account)
+        private static async Task<List<Order>> getLastTradesAsync(List<Symbol> symbols, string account)
         {
             // Read Environment Variables
             readEnvironmentVariables(account);
@@ -366,7 +366,7 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                SendTelegramMessageAsync(string.Format("Son gerçekleşen tradeler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                await SendTelegramMessageAsync(string.Format("Son gerçekleşen tradeler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
                 WriteLog(ex.InnerException.Message, account);
                 return myLastFilledOrders;
             }
@@ -397,7 +397,7 @@ namespace Binance.OTT.Trade
             await botClient.SendTextMessageAsync(environmentVariables.w, message);
         }
 
-        public static async void TradeAsync(string account)
+        public static async Task TradeAsync(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
             List<Candlestick> myCandlesticks = new List<Candlestick>();
@@ -422,30 +422,30 @@ namespace Binance.OTT.Trade
             long orderId = 0;
 
             // Read Symbols
-            mySembols = readSymbolsAsync(account);
+            mySembols = await readSymbolsAsync(account);
 
             // Get Balances
-            myBalances = getBalancesAsync(mySembols, account);
+            myBalances = await getBalancesAsync(mySembols, account);
 
             // Read CandleSticks
-            myCandlesticks = readLastCandleSticksAsync(mySembols, account);
-            myAvailableCandlesticks = readCurrentCandleSticksAsync(mySembols, account);
+            myCandlesticks = await readLastCandleSticksAsync(mySembols, account);
+            myAvailableCandlesticks = await readCurrentCandleSticksAsync(mySembols, account);
 
             // Calculate Available Amount
-            calculateAvailableAmountAsync(mySembols, myBalances, myAvailableCandlesticks, account);
+            await calculateAvailableAmountAsync(mySembols, myBalances, myAvailableCandlesticks, account);
 
             // Get Open Orders
-            List<Order> myOpenOrders = getCurrentOpenOrdersAsync(mySembols, account);
+            List<Order> myOpenOrders = await getCurrentOpenOrdersAsync(mySembols, account);
 
             // Get Account Last Trades
-            List<Order> myLastTrades = getLastTradesAsync(mySembols, account);
+            List<Order> myLastTrades = await getLastTradesAsync(mySembols, account);
 
             try
             {
                 // USDT Balanace
                 myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
                 if (myCurrentUSDTBalance != null)
-                    SendTelegramMessageAsync(string.Format("Mevcut USDT miktarı: {0}", Math.Round((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked), 2)));
+                    await SendTelegramMessageAsync(string.Format("Mevcut USDT miktarı: {0}", Math.Round((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked), 2)));
 
                 // Trade
                 foreach (var item in mySembols)
@@ -454,7 +454,7 @@ namespace Binance.OTT.Trade
                     readEnvironmentVariables(account);
 
                     // Get Account Info && Balances
-                    myBalances = getBalancesAsync(mySembols, account);
+                    myBalances = await getBalancesAsync(mySembols, account);
                     myCurrentOpenOrder = myOpenOrders.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
                     myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
                     myCurrentCoinBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
@@ -485,7 +485,7 @@ namespace Binance.OTT.Trade
                         currentCoinAmount = 0;
                     }
 
-                    SendTelegramMessageAsync(string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
+                    await SendTelegramMessageAsync(string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
                     WriteLog(string.Format("{0} Mevcut {1} miktarı: {2} ({3} USDT)", DateTime.Now.ToString(), item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount), account);
 
                     // Case 1
@@ -501,7 +501,7 @@ namespace Binance.OTT.Trade
                         myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
                         orderAmount = Math.Round(buyQuantity * buyPrice, item.priceRound);
 
-                        SendTelegramMessageAsync(string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount));
+                        await SendTelegramMessageAsync(string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount));
                     } // Case 2
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
                     {
@@ -509,7 +509,7 @@ namespace Binance.OTT.Trade
 
                         myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
-                        SendTelegramMessageAsync(string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
+                        await SendTelegramMessageAsync(string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
                     } // Case 3
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
                     {
@@ -530,11 +530,11 @@ namespace Binance.OTT.Trade
                             myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
                             orderAmount = Math.Round(buyQuantity * buyPrice, 2);
 
-                            SendTelegramMessageAsync(string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount));
+                            await SendTelegramMessageAsync(string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount));
                         }
                         else
                         {
-                            SendTelegramMessageAsync(string.Format("{0} için mevcuttaki ALIM emri GÜNCELLENMEMİŞTİR. Mevcut ALIM fiyatı {1}", item.symbol.ToUpper(), buyPrice));
+                            await SendTelegramMessageAsync(string.Format("{0} için mevcuttaki ALIM emri GÜNCELLENMEMİŞTİR. Mevcut ALIM fiyatı {1}", item.symbol.ToUpper(), buyPrice));
                         }
                     } // Case 4
                     else if ((myCurrentLastTrade != null && myCurrentLastTrade.Side == "BUY") && myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && (myCurrentCoinBalance != null && myCurrentCoinBalance.Free > 0))
@@ -549,7 +549,7 @@ namespace Binance.OTT.Trade
                         myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                         orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
 
-                        SendTelegramMessageAsync(string.Format("{0} için {1} adet ve {2} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount));
+                        await SendTelegramMessageAsync(string.Format("{0} için {1} adet ve {2} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount));
                     } // Case 5
                     else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
                     {
@@ -557,7 +557,7 @@ namespace Binance.OTT.Trade
 
                         myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
-                        SendTelegramMessageAsync(string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
+                        await SendTelegramMessageAsync(string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
                     } // Case 6
                     else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
                     {
@@ -577,22 +577,22 @@ namespace Binance.OTT.Trade
                             myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                             orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
 
-                            SendTelegramMessageAsync(string.Format("{0} için önceki verilen SATIŞ emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan SATIŞ emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, sellQuantity, sellPrice, orderAmount));
+                            await SendTelegramMessageAsync(string.Format("{0} için önceki verilen SATIŞ emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan SATIŞ emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, sellQuantity, sellPrice, orderAmount));
                         }
                         else
                         {
-                            SendTelegramMessageAsync(string.Format("{0} için mevcuttaki SATIŞ emri GÜNCELLENMEMİŞTİR. Mevcut SATIŞ fiyatı {1}", item.symbol.ToUpper(), sellPrice));
+                            await SendTelegramMessageAsync(string.Format("{0} için mevcuttaki SATIŞ emri GÜNCELLENMEMİŞTİR. Mevcut SATIŞ fiyatı {1}", item.symbol.ToUpper(), sellPrice));
                         }
                     }
                     else
                     {
-                        SendTelegramMessageAsync(string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır", item.symbol.ToUpper()));
+                        await SendTelegramMessageAsync(string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır", item.symbol.ToUpper()));
                     }
                 }
             }
             catch (Exception ex)
             {
-                SendTelegramMessageAsync(string.Format("Trade işlemi sırasında hata oluşmuştır. Hata: {0}", ex.InnerException.Message));
+                await SendTelegramMessageAsync(string.Format("Trade işlemi sırasında hata oluşmuştır. Hata: {0}", ex.InnerException.Message));
                 WriteLog(ex.InnerException.Message, account);
             }
         }

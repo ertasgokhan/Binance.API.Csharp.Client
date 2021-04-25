@@ -28,7 +28,7 @@ namespace Binance.Generate.OTT
             await botClient.SendTextMessageAsync(environmentVariables.w, message);
         }
 
-        private static List<Symbol> readSymbolsAsync(string account)
+        private static async Task<List<Symbol>> readSymbolsAsync(string account)
         {
             // Read Environment Variables
             ReadEnvironmentVariables(account);
@@ -49,7 +49,7 @@ namespace Binance.Generate.OTT
                 }
             }
 
-            SendTelegramMessageAsync(string.Format("OTTLine Generate için tüm Symboller dosyadan okunmuştur"));
+            await SendTelegramMessageAsync(string.Format("OTTLine Generate için tüm Symboller dosyadan okunmuştur"));
 
             return symbolsList;
         }
@@ -75,7 +75,7 @@ namespace Binance.Generate.OTT
             botClient = new TelegramBotClient(environmentVariables.z);
         }
 
-        private static void GetForOnePair(Symbol symbolItem, string account)
+        private static async Task GetForOnePairAsync(Symbol symbolItem, string account)
         {
             try
             {
@@ -108,11 +108,11 @@ namespace Binance.Generate.OTT
                     sw.WriteLine(OTTLines);
                 }
 
-                SendTelegramMessageAsync(string.Format("{0} için mum verileri başarıyla okunmuştur", symbol.ToUpper()));
+                await SendTelegramMessageAsync(string.Format("{0} için mum verileri başarıyla okunmuştur", symbol.ToUpper()));
             }
             catch (Exception ex)
             {
-                SendTelegramMessageAsync(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ((System.IO.FileLoadException)ex.InnerException).Message));
+                await SendTelegramMessageAsync(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ((System.IO.FileLoadException)ex.InnerException).Message));
                 WriteLog(((System.IO.FileLoadException)ex.InnerException).Message, account);
             }
         }
@@ -318,17 +318,17 @@ namespace Binance.Generate.OTT
             }
         }
 
-        public static void GenerateOTT(string account)
+        public static async Task GenerateOTT(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
 
             // Read Symbols
-            List<Symbol> symbolsList = readSymbolsAsync(account);
+            List<Symbol> symbolsList = await readSymbolsAsync(account);
 
             // Generate OTT Lines
             foreach (var item in symbolsList)
             {
-                GetForOnePair(item, account);
+                await GetForOnePairAsync(item, account);
             }
         }
     }
