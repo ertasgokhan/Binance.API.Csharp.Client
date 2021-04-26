@@ -30,9 +30,6 @@ namespace Binance.Generate.OTT
 
         private static async Task<List<Symbol>> readSymbolsAsync(string account)
         {
-            // Read Environment Variables
-            ReadEnvironmentVariables(account);
-
             List<Symbol> symbolsList = new List<Symbol>();
             string filepath = @"C:\TradeBot\" + account + "symbols.txt";
 
@@ -54,7 +51,7 @@ namespace Binance.Generate.OTT
             return symbolsList;
         }
 
-        private static void ReadEnvironmentVariables(string account)
+        private static void readEnvironmentVariables(string account)
         {
             string filepath = @"C:\TradeBot\" + account + "environment_variables.txt";
 
@@ -79,9 +76,6 @@ namespace Binance.Generate.OTT
         {
             try
             {
-                // Read Environment Variables
-                ReadEnvironmentVariables(account);
-
                 string symbol = symbolItem.symbol;
                 int Length = symbolItem.length;
                 decimal Percent = symbolItem.percent;
@@ -321,6 +315,9 @@ namespace Binance.Generate.OTT
         public static async Task GenerateOTT(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
+
+            // Read Environment Variables
+            readEnvironmentVariables(account);
 
             // Read Symbols
             List<Symbol> symbolsList = await readSymbolsAsync(account);

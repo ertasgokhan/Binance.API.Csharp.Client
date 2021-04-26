@@ -47,9 +47,6 @@ namespace Binance.OTT.Trade
 
         private static async Task<List<Symbol>> readSymbolsAsync(string account)
         {
-            // Read Environment Variables
-            readEnvironmentVariables(account);
-
             List<Symbol> symbolsList = new List<Symbol>();
 
             try
@@ -90,9 +87,6 @@ namespace Binance.OTT.Trade
 
         private static async Task<List<Candlestick>> readLastCandleSticksAsync(List<Symbol> symbols, string account)
         {
-            // Read Environment Variables
-            readEnvironmentVariables(account);
-
             List<Candlestick> candlestickList = new List<Candlestick>();
 
             try
@@ -148,9 +142,6 @@ namespace Binance.OTT.Trade
 
         private static async Task<List<Candlestick>> readCurrentCandleSticksAsync(List<Symbol> symbols, string account)
         {
-            // Read Environment Variables
-            readEnvironmentVariables(account);
-
             List<Candlestick> candlestickList = new List<Candlestick>();
 
             try
@@ -203,9 +194,6 @@ namespace Binance.OTT.Trade
         {
             try
             {
-                // Read Environment Variables
-                readEnvironmentVariables(account);
-
                 Candlestick myCurrentCandlestickList = new Candlestick();
                 Balance myCurrentBalance = new Balance();
                 Balance myCurrentUSDTBalance = new Balance();
@@ -273,9 +261,6 @@ namespace Binance.OTT.Trade
 
         private static async Task<List<Balance>> getBalancesAsync(List<Symbol> mySembols, string account)
         {
-            // Read Environment Variables
-            readEnvironmentVariables(account);
-
             var tempBalances = new List<Balance>();
 
             try
@@ -309,9 +294,6 @@ namespace Binance.OTT.Trade
 
         private static async Task<List<Order>> getCurrentOpenOrdersAsync(List<Symbol> symbols, string account)
         {
-            // Read Environment Variables
-            readEnvironmentVariables(account);
-
             List<Order> myOpenOrders = new List<Order>();
             List<Order> myCurrentOpenOrders = new List<Order>();
 
@@ -337,9 +319,6 @@ namespace Binance.OTT.Trade
 
         private static async Task<List<Order>> getLastTradesAsync(List<Symbol> symbols, string account)
         {
-            // Read Environment Variables
-            readEnvironmentVariables(account);
-
             List<Order> myCurrentOrder = new List<Order>();
             List<Order> myLastFilledOrders = new List<Order>();
             Order myLastOrder = new Order();
@@ -400,6 +379,8 @@ namespace Binance.OTT.Trade
         public static async Task TradeAsync(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
+            // Read Environment Variables
+            readEnvironmentVariables(account);
             List<Candlestick> myCandlesticks = new List<Candlestick>();
             List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
             List<Balance> myBalances = new List<Balance>();
@@ -450,9 +431,6 @@ namespace Binance.OTT.Trade
                 // Trade
                 foreach (var item in mySembols)
                 {
-                    // Read Environment Variables
-                    readEnvironmentVariables(account);
-
                     // Get Account Info && Balances
                     myBalances = await getBalancesAsync(mySembols, account);
                     myCurrentOpenOrder = myOpenOrders.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
