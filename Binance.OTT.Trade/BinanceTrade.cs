@@ -99,7 +99,7 @@ namespace Binance.OTT.Trade
 
                 foreach (var item in symbols)
                 {
-                    filepath = @"C:\TradeBot\COMMON" + item.symbol + ".txt";
+                    filepath = @"C:\TradeBot\COMMON\" + item.symbol + ".txt";
                     lineNumber = 0;
                     symbolCandleStick = string.Empty;
                     lastCandleStickStr = string.Empty;
@@ -154,7 +154,7 @@ namespace Binance.OTT.Trade
 
                 foreach (var item in symbols)
                 {
-                    filepath = @"C:\TradeBot\COMMON" + item.symbol + ".txt";
+                    filepath = @"C:\TradeBot\COMMON\" + item.symbol + ".txt";
                     lineNumber = 0;
                     symbolCandleStick = string.Empty;
                     lastCandleStickStr = string.Empty;
