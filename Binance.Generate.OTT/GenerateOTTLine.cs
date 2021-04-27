@@ -85,7 +85,7 @@ namespace Binance.Generate.OTT
                 List<Candlestick> candlestick = new List<Candlestick>();
                 List<Candlestick> tempCandlestick = new List<Candlestick>();
 
-                for (int i = -15; i < 0; i++)
+                for (int i = -12; i < 0; i++)
                 {
                     tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddMonths(i), DateTime.Now.AddMonths(i + 1), limit).Result.ToList();
 
@@ -323,10 +323,10 @@ namespace Binance.Generate.OTT
             List<Symbol> symbolsList = await readSymbolsAsync(account);
 
             // Generate OTT Lines
-            foreach (var item in symbolsList)
+            Parallel.ForEach(symbolsList, async item =>
             {
                 await GetForOnePairAsync(item, account);
-            }
+            });
         }
     }
 }
