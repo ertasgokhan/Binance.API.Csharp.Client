@@ -99,7 +99,7 @@ namespace Binance.OTT.Trade
 
                 foreach (var item in symbols)
                 {
-                    filepath = @"C:\TradeBot\" + account + item.symbol + ".txt";
+                    filepath = @"C:\TradeBot\COMMON" + item.symbol + ".txt";
                     lineNumber = 0;
                     symbolCandleStick = string.Empty;
                     lastCandleStickStr = string.Empty;
@@ -154,7 +154,7 @@ namespace Binance.OTT.Trade
 
                 foreach (var item in symbols)
                 {
-                    filepath = @"C:\TradeBot\" + account + item.symbol + ".txt";
+                    filepath = @"C:\TradeBot\COMMON" + item.symbol + ".txt";
                     lineNumber = 0;
                     symbolCandleStick = string.Empty;
                     lastCandleStickStr = string.Empty;
@@ -464,7 +464,7 @@ namespace Binance.OTT.Trade
                     }
 
                     await SendTelegramMessageAsync(string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
-                    WriteLog(string.Format("{0} Mevcut {1} miktarı: {2} ({3} USDT)", DateTime.Now.ToString(), item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount), account);
+                    //WriteLog(string.Format("{0} Mevcut {1} miktarı: {2} ({3} USDT)", DateTime.Now.ToString(), item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount), account);
 
                     // Case 1
                     if ((myCurrentLastTrade == null || (myCurrentLastTrade.Side == "SELL")) && myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && availableBuyAmount > 10.02M && myCurrentUSDTBalance.Free > availableBuyAmount)
