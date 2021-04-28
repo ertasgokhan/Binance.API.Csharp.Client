@@ -381,6 +381,7 @@ namespace Binance.OTT.Trade
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
             // Read Environment Variables
             readEnvironmentVariables(account);
+            await SendTelegramMessageAsync("****************** Trade İşlemi Başlamıştır ******************");
             List<Candlestick> myCandlesticks = new List<Candlestick>();
             List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
             List<Balance> myBalances = new List<Balance>();
@@ -400,6 +401,7 @@ namespace Binance.OTT.Trade
             decimal availableBuyAmount = 0;
             decimal currentCoinUSDTAmount = 0;
             decimal currentCoinAmount = 0;
+            decimal totalAmount = 0;
             long orderId = 0;
 
             // Read Symbols
@@ -426,7 +428,7 @@ namespace Binance.OTT.Trade
                 // USDT Balanace
                 myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
                 if (myCurrentUSDTBalance != null)
-                    await SendTelegramMessageAsync(string.Format("Mevcut USDT miktarı: {0}", Math.Round((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked), 2)));
+                    await SendTelegramMessageAsync(string.Format("Long Poz miktarı: {0} USDT", Math.Round((myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked), 2)));
 
                 // Trade
                 foreach (var item in mySembols)
@@ -464,6 +466,7 @@ namespace Binance.OTT.Trade
                     }
 
                     await SendTelegramMessageAsync(string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
+                    totalAmount += currentCoinUSDTAmount;
                     //WriteLog(string.Format("{0} Mevcut {1} miktarı: {2} ({3} USDT)", DateTime.Now.ToString(), item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount), account);
 
                     // Case 1
@@ -567,6 +570,8 @@ namespace Binance.OTT.Trade
                         await SendTelegramMessageAsync(string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır", item.symbol.ToUpper()));
                     }
                 }
+
+                await SendTelegramMessageAsync(string.Format("Toplam Spot Cüzdan Bakiyesi: {0} USDT", Math.Round(totalAmount + myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked, 2)));
             }
             catch (Exception ex)
             {
