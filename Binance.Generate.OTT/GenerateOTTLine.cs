@@ -42,6 +42,7 @@ namespace Binance.Generate.OTT
                     tmp.symbol = str.Split(';')[0];
                     tmp.length = int.Parse(str.Split(';')[1]);
                     tmp.percent = Decimal.Parse(str.Split(';')[2]);
+                    tmp.pastDataLength = int.Parse(str.Split(';')[5]);
                     symbolsList.Add(tmp);
                 }
             }
@@ -85,7 +86,7 @@ namespace Binance.Generate.OTT
                 List<Candlestick> candlestick = new List<Candlestick>();
                 List<Candlestick> tempCandlestick = new List<Candlestick>();
 
-                for (int i = -12; i < 0; i++)
+                for (int i = symbolItem.pastDataLength; i < 0; i++)
                 {
                     tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddMonths(i), DateTime.Now.AddMonths(i + 1), limit).Result.ToList();
 
@@ -106,7 +107,7 @@ namespace Binance.Generate.OTT
             }
             catch (Exception ex)
             {
-                await SendTelegramMessageAsync(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ((System.IO.FileLoadException)ex.InnerException).Message));
+                await SendTelegramMessageAsync(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ex.Message));
                 WriteLog(((System.IO.FileLoadException)ex.InnerException).Message, account);
             }
         }

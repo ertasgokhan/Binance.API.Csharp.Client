@@ -14,5 +14,6 @@ namespace Binance.Generate.OTT
 
         public decimal percent { get; set; }
 
+        public int pastDataLength { get; set; }
     }
 }

@@ -472,10 +472,10 @@ namespace Binance.OTT.Trade
                     // Case 1
                     if ((myCurrentLastTrade == null || (myCurrentLastTrade.Side == "SELL")) && myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && availableBuyAmount > 10.02M && myCurrentUSDTBalance.Free > availableBuyAmount)
                     {
-                        if ((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)) > myAvailableCurrentCandleStick.High)
+                        if ((myCurrentCandleStick.SupportLine - (myCurrentCandleStick.SupportLine * item.buyRatio)) > myAvailableCurrentCandleStick.High)
                             buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
                         else
-                            buyPrice = Math.Round((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)), item.priceRound);
+                            buyPrice = Math.Round((myCurrentCandleStick.SupportLine - (myCurrentCandleStick.SupportLine * item.buyRatio)), item.priceRound);
 
                         buyQuantity = Math.Round((availableBuyAmount / buyPrice), item.quantityRound);
 
@@ -494,10 +494,10 @@ namespace Binance.OTT.Trade
                     } // Case 3
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
                     {
-                        if ((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)) > myAvailableCurrentCandleStick.High)
+                        if ((myCurrentCandleStick.SupportLine - (myCurrentCandleStick.SupportLine * item.buyRatio)) > myAvailableCurrentCandleStick.High)
                             buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
                         else
-                            buyPrice = Math.Round((myCurrentCandleStick.OTTLine - (myCurrentCandleStick.OTTLine * item.buyRatio)), item.priceRound);
+                            buyPrice = Math.Round((myCurrentCandleStick.SupportLine - (myCurrentCandleStick.SupportLine * item.buyRatio)), item.priceRound);
 
                         if (myCurrentOpenOrder.Price != buyPrice)
                         {
@@ -520,10 +520,10 @@ namespace Binance.OTT.Trade
                     } // Case 4
                     else if ((myCurrentLastTrade != null && myCurrentLastTrade.Side == "BUY") && myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && (myCurrentCoinBalance != null && myCurrentCoinBalance.Free > 0))
                     {
-                        if ((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
+                        if ((myCurrentCandleStick.SupportLine + (myCurrentCandleStick.SupportLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
                             sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
                         else
-                            sellPrice = Math.Round((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)), item.priceRound);
+                            sellPrice = Math.Round((myCurrentCandleStick.SupportLine + (myCurrentCandleStick.SupportLine * item.sellRatio)), item.priceRound);
 
                         sellQuantity = Math.Round(myCurrentCoinBalance.Free - (decimal)Math.Pow(10, (item.quantityRound * -1)), item.quantityRound);
 
@@ -542,10 +542,10 @@ namespace Binance.OTT.Trade
                     } // Case 6
                     else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
                     {
-                        if ((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
+                        if ((myCurrentCandleStick.SupportLine + (myCurrentCandleStick.SupportLine * item.sellRatio)) < myAvailableCurrentCandleStick.Low)
                             sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
                         else
-                            sellPrice = Math.Round((myCurrentCandleStick.OTTLine + (myCurrentCandleStick.OTTLine * item.sellRatio)), item.priceRound);
+                            sellPrice = Math.Round((myCurrentCandleStick.SupportLine + (myCurrentCandleStick.SupportLine * item.sellRatio)), item.priceRound);
 
                         if (myCurrentOpenOrder.Price != sellPrice)
                         {
