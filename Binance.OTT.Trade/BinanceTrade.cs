@@ -376,6 +376,38 @@ namespace Binance.OTT.Trade
             await botClient.SendTextMessageAsync(environmentVariables.w, message);
         }
 
+        private static async Task CalculateSpotWalletAsync(string account, List<Candlestick> myAvailableCandlesticks)
+        {
+            List<Balance> myBalances = new List<Balance>();
+            Balance myCurrentUSDTBalance = new Balance();
+            Balance myCurrentCoinBalance = new Balance();
+            Candlestick myAvailableCurrentCandleStick = new Candlestick();
+            decimal totalAmount = 0;
+            decimal currentCoinUSDTAmount = 0;
+
+            // Get Balance
+            myBalances = await getBalancesAsync(mySembols, account);
+
+            // Get USDT Balance
+            myCurrentUSDTBalance = myBalances.FirstOrDefault(i => i.Asset == "USDT");
+
+            foreach (var item in mySembols)
+            {
+                myCurrentCoinBalance = myBalances.FirstOrDefault(i => i.Asset == item.symbolCoin);
+                myAvailableCurrentCandleStick = myAvailableCandlesticks.FirstOrDefault(i => i.Symbol == item.symbol);
+
+                // Send Coin Info
+                if (myCurrentCoinBalance != null)
+                    currentCoinUSDTAmount = Math.Round(((myCurrentCoinBalance.Free + myCurrentCoinBalance.Locked) * myAvailableCurrentCandleStick.Close), 2);
+                else
+                    currentCoinUSDTAmount = 0;
+
+                totalAmount += currentCoinUSDTAmount;
+            }
+
+            await SendTelegramMessageAsync(string.Format("Toplam Spot Cüzdan Bakiyesi: {0} USDT", Math.Round(totalAmount + myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked, 2)));
+        }
+
         public static async Task TradeAsync(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
@@ -401,7 +433,6 @@ namespace Binance.OTT.Trade
             decimal availableBuyAmount = 0;
             decimal currentCoinUSDTAmount = 0;
             decimal currentCoinAmount = 0;
-            decimal totalAmount = 0;
             long orderId = 0;
 
             // Read Symbols
@@ -466,7 +497,6 @@ namespace Binance.OTT.Trade
                     }
 
                     await SendTelegramMessageAsync(string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
-                    totalAmount += currentCoinUSDTAmount;
                     //WriteLog(string.Format("{0} Mevcut {1} miktarı: {2} ({3} USDT)", DateTime.Now.ToString(), item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount), account);
 
                     // Case 1
@@ -571,7 +601,7 @@ namespace Binance.OTT.Trade
                     }
                 }
 
-                await SendTelegramMessageAsync(string.Format("Toplam Spot Cüzdan Bakiyesi: {0} USDT", Math.Round(totalAmount + myCurrentUSDTBalance.Free + myCurrentUSDTBalance.Locked, 2)));
+                await CalculateSpotWalletAsync(account, myAvailableCandlesticks);
             }
             catch (Exception ex)
             {
