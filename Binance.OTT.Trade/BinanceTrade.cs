@@ -371,7 +371,7 @@ namespace Binance.OTT.Trade
             }
         }
 
-        private static void WriteTradeLog(string LogMessage, string account)
+        private static void WriteOrderLog(string LogMessage, string account)
         {
             string filepath = @"C:\TradeBot\" + account + "\\OrderLog.txt";
 
@@ -533,7 +533,7 @@ namespace Binance.OTT.Trade
                         orderAmount = Math.Round(buyQuantity * buyPrice, item.priceRound);
 
                         await SendTelegramMessageAsync(string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount));
-                        WriteTradeLog(string.Format("{0};AL;{1};{2}", item.symbol.ToUpper(), buyQuantity, buyPrice), account);
+                        WriteOrderLog(string.Format("{0};AL;{1};{2};{3};{4}", item.symbol.ToUpper(), buyQuantity, buyPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 2
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
                     {
@@ -542,7 +542,7 @@ namespace Binance.OTT.Trade
                         myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
                         await SendTelegramMessageAsync(string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
-                        WriteTradeLog(string.Format("{0};IPTAL;{1};{2}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price), account);
+                        WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 3
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
                     {
@@ -556,7 +556,7 @@ namespace Binance.OTT.Trade
                             orderId = myCurrentOpenOrder.OrderId;
 
                             myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
-                            WriteTradeLog(string.Format("{0};IPTAL;{1};{2}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price), account);
+                            WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
 
                             // Calculate Quantity 
                             buyQuantity = Math.Round((availableBuyAmount / buyPrice), item.quantityRound);
@@ -565,7 +565,7 @@ namespace Binance.OTT.Trade
                             orderAmount = Math.Round(buyQuantity * buyPrice, 2);
 
                             await SendTelegramMessageAsync(string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount));
-                            WriteTradeLog(string.Format("{0};AL;{1};{2}", item.symbol.ToUpper(), buyQuantity, buyPrice), account);
+                            WriteOrderLog(string.Format("{0};AL;{1};{2};{3};{4}", item.symbol.ToUpper(), buyQuantity, buyPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                         }
                         else
                         {
@@ -585,7 +585,7 @@ namespace Binance.OTT.Trade
                         orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
 
                         await SendTelegramMessageAsync(string.Format("{0} için {1} adet ve {2} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount));
-                        WriteTradeLog(string.Format("{0};SAT;{1};{2}", item.symbol.ToUpper(), sellQuantity, sellPrice), account);
+                        WriteOrderLog(string.Format("{0};SAT;{1};{2};{3};{4}", item.symbol.ToUpper(), sellQuantity, sellPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 5
                     else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
                     {
@@ -594,7 +594,7 @@ namespace Binance.OTT.Trade
                         myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
                         await SendTelegramMessageAsync(string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
-                        WriteTradeLog(string.Format("{0};IPTAL;{1};{2}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price), account);
+                        WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 6
                     else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
                     {
@@ -608,7 +608,7 @@ namespace Binance.OTT.Trade
                             orderId = myCurrentOpenOrder.OrderId;
 
                             myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
-                            WriteTradeLog(string.Format("{0};IPTAL;{1};{2}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price), account);
+                            WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
 
                             sellQuantity = Math.Round((myCurrentCoinBalance.Free + myCurrentCoinBalance.Locked) - (decimal)Math.Pow(10, (item.quantityRound * -1)), item.quantityRound);
 
@@ -616,7 +616,7 @@ namespace Binance.OTT.Trade
                             orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
 
                             await SendTelegramMessageAsync(string.Format("{0} için önceki verilen SATIŞ emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan SATIŞ emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, sellQuantity, sellPrice, orderAmount));
-                            WriteTradeLog(string.Format("{0};SAT;{1};{2}", item.symbol.ToUpper(), sellQuantity, sellPrice), account);
+                            WriteOrderLog(string.Format("{0};SAT;{1};{2};{3};{4}", item.symbol.ToUpper(), sellQuantity, sellPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                         }
                         else
                         {
