@@ -453,6 +453,7 @@ namespace Binance.OTT.Trade
             decimal availableBuyAmount = 0;
             decimal currentCoinUSDTAmount = 0;
             decimal currentCoinAmount = 0;
+            string bulkMessage = string.Empty;
             long orderId = 0;
 
             // Read Symbols
@@ -516,7 +517,7 @@ namespace Binance.OTT.Trade
                         currentCoinAmount = 0;
                     }
 
-                    await SendTelegramMessageAsync(string.Format("Mevcut {0} miktarı: {1} ({2} USDT)", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount));
+                    bulkMessage += string.Format("Mevcut {0} miktarı: {1} ({2} USDT) \n", item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount);
                     //WriteLog(string.Format("{0} Mevcut {1} miktarı: {2} ({3} USDT)", DateTime.Now.ToString(), item.symbolCoin, currentCoinAmount, currentCoinUSDTAmount), account);
 
                     // Case 1
@@ -532,7 +533,7 @@ namespace Binance.OTT.Trade
                         myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
                         orderAmount = Math.Round(buyQuantity * buyPrice, item.priceRound);
 
-                        await SendTelegramMessageAsync(string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount));
+                        bulkMessage+= string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3} \n", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount);
                         WriteOrderLog(string.Format("{0};AL;{1};{2};{3};{4}", item.symbol.ToUpper(), buyQuantity, buyPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 2
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
@@ -541,7 +542,7 @@ namespace Binance.OTT.Trade
 
                         myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
-                        await SendTelegramMessageAsync(string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
+                        bulkMessage+= string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1} \n", item.symbol.ToUpper(), orderId);
                         WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 3
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
@@ -564,12 +565,12 @@ namespace Binance.OTT.Trade
                             myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
                             orderAmount = Math.Round(buyQuantity * buyPrice, 2);
 
-                            await SendTelegramMessageAsync(string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount));
+                            bulkMessage+= string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4} \n", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount);
                             WriteOrderLog(string.Format("{0};AL;{1};{2};{3};{4}", item.symbol.ToUpper(), buyQuantity, buyPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                         }
                         else
                         {
-                            await SendTelegramMessageAsync(string.Format("{0} için mevcuttaki ALIM emri GÜNCELLENMEMİŞTİR. Mevcut ALIM fiyatı {1}", item.symbol.ToUpper(), buyPrice));
+                            bulkMessage += string.Format("{0} için mevcuttaki ALIM emri GÜNCELLENMEMİŞTİR. Mevcut ALIM fiyatı {1} \n", item.symbol.ToUpper(), buyPrice);
                         }
                     } // Case 4
                     else if ((myCurrentLastTrade != null && myCurrentLastTrade.Side == "BUY") && myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && (myCurrentCoinBalance != null && myCurrentCoinBalance.Free > 0))
@@ -584,7 +585,7 @@ namespace Binance.OTT.Trade
                         myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                         orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
 
-                        await SendTelegramMessageAsync(string.Format("{0} için {1} adet ve {2} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {3}", item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount));
+                        bulkMessage += string.Format("{0} için {1} adet ve {2} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {3} \n", item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount);
                         WriteOrderLog(string.Format("{0};SAT;{1};{2};{3};{4}", item.symbol.ToUpper(), sellQuantity, sellPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 5
                     else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
@@ -593,7 +594,7 @@ namespace Binance.OTT.Trade
 
                         myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
 
-                        await SendTelegramMessageAsync(string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1}", item.symbol.ToUpper(), orderId));
+                        bulkMessage += string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1} \n", item.symbol.ToUpper(), orderId);
                         WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 6
                     else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
@@ -615,19 +616,22 @@ namespace Binance.OTT.Trade
                             myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
                             orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
 
-                            await SendTelegramMessageAsync(string.Format("{0} için önceki verilen SATIŞ emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan SATIŞ emri güncellenmiştir. İşlem Hacmi {4}", item.symbol.ToUpper(), orderId, sellQuantity, sellPrice, orderAmount));
+                            bulkMessage += string.Format("{0} için önceki verilen SATIŞ emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan SATIŞ emri güncellenmiştir. İşlem Hacmi {4} \n", item.symbol.ToUpper(), orderId, sellQuantity, sellPrice, orderAmount);
                             WriteOrderLog(string.Format("{0};SAT;{1};{2};{3};{4}", item.symbol.ToUpper(), sellQuantity, sellPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                         }
                         else
                         {
-                            await SendTelegramMessageAsync(string.Format("{0} için mevcuttaki SATIŞ emri GÜNCELLENMEMİŞTİR. Mevcut SATIŞ fiyatı {1}", item.symbol.ToUpper(), sellPrice));
+                            bulkMessage += string.Format("{0} için mevcuttaki SATIŞ emri GÜNCELLENMEMİŞTİR. Mevcut SATIŞ fiyatı {1} \n", item.symbol.ToUpper(), sellPrice);
                         }
                     }
                     else
                     {
-                        await SendTelegramMessageAsync(string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır", item.symbol.ToUpper()));
+                        bulkMessage += string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır \n", item.symbol.ToUpper());
                     }
                 }
+
+                if (!string.IsNullOrEmpty(bulkMessage))
+                    await SendTelegramMessageAsync(bulkMessage);
 
                 await CalculateSpotWalletAsync(account, myAvailableCandlesticks);
             }
