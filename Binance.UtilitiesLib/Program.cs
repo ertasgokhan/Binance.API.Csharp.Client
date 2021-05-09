@@ -7,15 +7,15 @@ namespace Binance.UtilitiesLib
     {
         public static void Main(string[] args)
         {
-            string a = StringCipher.Encrypt("1856792552:AAGhNnyFPLlQ39-vpl6NDYuCGV7kwuthh84");
+            //string a = StringCipher.Encrypt("");
 
-            Console.WriteLine(a);
+            //Console.WriteLine(a);
 
-            string b = StringCipher.Encrypt("-526163480");
+            //string b = StringCipher.Encrypt("");
 
-            Console.WriteLine(b);
+            //Console.WriteLine(b);
 
-            Console.ReadLine();
+            //Console.ReadLine();
         }
     }
 }
