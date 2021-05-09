@@ -8,7 +8,7 @@ namespace Binance.UtilitiesLib
 {
     public class StringCipher
     {
-        private static string Encrypt(string clearText)
+        public static string Encrypt(string clearText)
         {
             string x = "dibinigörmeyenanasının***görsün";
             byte[] clearBytes = Encoding.Unicode.GetBytes(clearText);
