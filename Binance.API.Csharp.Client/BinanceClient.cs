@@ -194,7 +194,7 @@ namespace Binance.API.Csharp.Client
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(origClientOrderId))
+                if (string.IsNullOrWhiteSpace(origClientOrderId))
                 {
                     throw new ArgumentException("Either orderId or origClientOrderId must be sent.");
                 }

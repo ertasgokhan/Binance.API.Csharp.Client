@@ -22,6 +22,7 @@ namespace Binance.OTT.Trade
         private static ApiClient apiClient = new ApiClient("", "");
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
         private static List<Symbol> mySembols = new List<Symbol>();
+        private static List<Order> myOpenOrders = new List<Order>();
         private static TelegramBotClient botClient;
 
         private static void readEnvironmentVariables(string account)
@@ -322,6 +323,7 @@ namespace Binance.OTT.Trade
             List<Order> myCurrentOrder = new List<Order>();
             List<Order> myLastFilledOrders = new List<Order>();
             Order myLastOrder = new Order();
+            Order myLastOpenOrder = new Order();
 
             try
             {
@@ -335,9 +337,13 @@ namespace Binance.OTT.Trade
                     if (myCurrentOrder != null && myCurrentOrder.Count() > 0)
                     {
                         myLastOrder = myCurrentOrder.LastOrDefault(i => i.Status == "FILLED");
+                        myLastOpenOrder = myCurrentOrder.LastOrDefault(i => i.Status == "NEW");
 
                         if (myLastOrder != null)
                             myLastFilledOrders.Add(myLastOrder);
+
+                        if (myLastOpenOrder != null)
+                            myOpenOrders.Add(myLastOpenOrder);
                     }
                 }
 
@@ -470,7 +476,7 @@ namespace Binance.OTT.Trade
             await calculateAvailableAmountAsync(mySembols, myBalances, myAvailableCandlesticks, account);
 
             // Get Open Orders
-            List<Order> myOpenOrders = await getCurrentOpenOrdersAsync(mySembols, account);
+            //List<Order> myOpenOrders = await getCurrentOpenOrdersAsync(mySembols, account);
 
             // Get Account Last Trades
             List<Order> myLastTrades = await getLastTradesAsync(mySembols, account);
@@ -540,7 +546,7 @@ namespace Binance.OTT.Trade
                     {
                         orderId = myCurrentOpenOrder.OrderId;
 
-                        myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+                        myCancelOrder = await binanceClient.CancelOrder(item.symbol, null, myCurrentOpenOrder.ClientOrderId);
 
                         bulkMessage+= string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1} \n", item.symbol.ToUpper(), orderId);
                         WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
@@ -556,7 +562,7 @@ namespace Binance.OTT.Trade
                         {
                             orderId = myCurrentOpenOrder.OrderId;
 
-                            myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+                            myCancelOrder = await binanceClient.CancelOrder(item.symbol, null, myCurrentOpenOrder.ClientOrderId);
                             WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
 
                             // Calculate Quantity 
@@ -592,7 +598,7 @@ namespace Binance.OTT.Trade
                     {
                         orderId = myCurrentOpenOrder.OrderId;
 
-                        myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+                        myCancelOrder = await binanceClient.CancelOrder(item.symbol, null, myCurrentOpenOrder.ClientOrderId);
 
                         bulkMessage += string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1} \n", item.symbol.ToUpper(), orderId);
                         WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
@@ -608,7 +614,7 @@ namespace Binance.OTT.Trade
                         {
                             orderId = myCurrentOpenOrder.OrderId;
 
-                            myCancelOrder = await binanceClient.CancelOrder(item.symbol, orderId);
+                            myCancelOrder = await binanceClient.CancelOrder(item.symbol, null, myCurrentOpenOrder.ClientOrderId);
                             WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
 
                             sellQuantity = Math.Round((myCurrentCoinBalance.Free + myCurrentCoinBalance.Locked) - (decimal)Math.Pow(10, (item.quantityRound * -1)), item.quantityRound);
