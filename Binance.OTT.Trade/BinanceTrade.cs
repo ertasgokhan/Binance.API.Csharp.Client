@@ -80,8 +80,17 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                await SendTelegramMessageAsync(string.Format("Sembol listesi okunurken hata oluştu. Hata: {0}", ex.Message));
-                WriteLog(ex.InnerException.Message, account);
+                if (ex.InnerException != null)
+                {
+                    await SendTelegramMessageAsync(string.Format("Sembol listesi okunurken hata oluştu. Hata: {0}", ex.InnerException));
+                    WriteLog(ex.InnerException.Message, account);
+                }
+                else
+                {
+                    await SendTelegramMessageAsync(string.Format("Sembol listesi okunurken hata oluştu. Hata: {0}", ex.Message));
+                    WriteLog(ex.Message, account);
+                }
+
                 return symbolsList;
             }
         }
@@ -135,8 +144,17 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                await SendTelegramMessageAsync(string.Format("1 saat öncenin mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message, account);
+                if (ex.InnerException != null)
+                {
+                    await SendTelegramMessageAsync(string.Format("15 DK'lık mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                    WriteLog(ex.InnerException.Message, account);
+                }
+                else
+                {
+                    await SendTelegramMessageAsync(string.Format("15 DK'lık mum verileri okunurken hata oluştu. Hata: {0}", ex.Message));
+                    WriteLog(ex.Message, account);
+                }
+
                 return candlestickList;
             }
         }
@@ -185,8 +203,17 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                await SendTelegramMessageAsync(string.Format("Anlık mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message, account);
+                if (ex.InnerException != null)
+                {
+                    await SendTelegramMessageAsync(string.Format("Anlık mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                    WriteLog(ex.InnerException.Message, account);
+                }
+                else
+                {
+                    await SendTelegramMessageAsync(string.Format("Anlık mum verileri okunurken hata oluştu. Hata: {0}", ex.Message));
+                    WriteLog(ex.Message, account);
+                }
+
                 return candlestickList;
             }
         }
@@ -255,8 +282,16 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                await SendTelegramMessageAsync(string.Format("Kullanılabilir USDT bakiyelerin hesaplanması sırasında hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message, account);
+                if (ex.InnerException != null)
+                {
+                    await SendTelegramMessageAsync(string.Format("Kullanılabilir USDT bakiyelerin hesaplanması sırasında hata oluştu. Hata: {0}", ex.InnerException.Message));
+                    WriteLog(ex.InnerException.Message, account);
+                }
+                else
+                {
+                    await SendTelegramMessageAsync(string.Format("Kullanılabilir USDT bakiyelerin hesaplanması sırasında hata oluştu. Hata: {0}", ex.Message));
+                    WriteLog(ex.Message, account);
+                }
             }
         }
 
@@ -287,8 +322,17 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                await SendTelegramMessageAsync(string.Format("Coinlerin bakiyelerini çekerken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message, account);
+                if (ex.InnerException != null)
+                {
+                    await SendTelegramMessageAsync(string.Format("Coinlerin bakiyelerini çekerken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                    WriteLog(ex.InnerException.Message, account);
+                }
+                else
+                {
+                    await SendTelegramMessageAsync(string.Format("Coinlerin bakiyelerini çekerken hata oluştu. Hata: {0}", ex.Message));
+                    WriteLog(ex.Message, account);
+                }
+
                 return tempBalances;
             }
         }
@@ -312,8 +356,17 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                await SendTelegramMessageAsync(string.Format("Açık emirler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message, account);
+                if (ex.InnerException != null)
+                {
+                    await SendTelegramMessageAsync(string.Format("Açık emirler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                    WriteLog(ex.InnerException.Message, account);
+                }
+                else
+                {
+                    await SendTelegramMessageAsync(string.Format("Coinlerin bakiyelerini çekerken hata oluştu. Hata: {0}", ex.Message));
+                    WriteLog(ex.Message, account);
+                }
+
                 return myOpenOrders;
             }
         }
@@ -351,8 +404,17 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                await SendTelegramMessageAsync(string.Format("Son gerçekleşen tradeler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message, account);
+                if (ex.InnerException != null)
+                {
+                    await SendTelegramMessageAsync(string.Format("Son gerçekleşen tradeler çekilirken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                    WriteLog(ex.InnerException.Message, account);
+                }
+                else
+                {
+                    await SendTelegramMessageAsync(string.Format("Son gerçekleşen tradeler çekilirken hata oluştu. Hata: {0}", ex.Message));
+                    WriteLog(ex.Message, account);
+                }
+
                 return myLastFilledOrders;
             }
         }
@@ -539,7 +601,7 @@ namespace Binance.OTT.Trade
                         myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
                         orderAmount = Math.Round(buyQuantity * buyPrice, item.priceRound);
 
-                        bulkMessage+= string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3} \n", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount);
+                        bulkMessage += string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3} \n", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount);
                         WriteOrderLog(string.Format("{0};AL;{1};{2};{3};{4}", item.symbol.ToUpper(), buyQuantity, buyPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 2
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
@@ -548,7 +610,7 @@ namespace Binance.OTT.Trade
 
                         myCancelOrder = await binanceClient.CancelOrder(item.symbol, null, myCurrentOpenOrder.ClientOrderId);
 
-                        bulkMessage+= string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1} \n", item.symbol.ToUpper(), orderId);
+                        bulkMessage += string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1} \n", item.symbol.ToUpper(), orderId);
                         WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 3
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
@@ -571,7 +633,7 @@ namespace Binance.OTT.Trade
                             myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
                             orderAmount = Math.Round(buyQuantity * buyPrice, 2);
 
-                            bulkMessage+= string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4} \n", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount);
+                            bulkMessage += string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4} \n", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount);
                             WriteOrderLog(string.Format("{0};AL;{1};{2};{3};{4}", item.symbol.ToUpper(), buyQuantity, buyPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                         }
                         else
@@ -643,8 +705,16 @@ namespace Binance.OTT.Trade
             }
             catch (Exception ex)
             {
-                await SendTelegramMessageAsync(string.Format("Trade işlemi sırasında hata oluşmuştır. Hata: {0}", ex.InnerException.Message));
-                WriteLog(ex.InnerException.Message, account);
+                if (ex.InnerException != null)
+                {
+                    await SendTelegramMessageAsync(string.Format("Trade işlemi sırasında hata oluşmuştır. Hata: {0}", ex.InnerException.Message));
+                    WriteLog(ex.InnerException.Message, account);
+                }
+                else
+                {
+                    await SendTelegramMessageAsync(string.Format("Trade işlemi sırasında hata oluşmuştır. Hata: {0}", ex.Message));
+                    WriteLog(ex.Message, account);
+                }
             }
         }
     }
