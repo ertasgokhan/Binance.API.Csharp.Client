@@ -88,7 +88,7 @@ namespace Binance.Generate.OTT
 
                 //for (int i = symbolItem.pastDataLength; i < 0; i++)
                 //{
-                tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Minutes_15, DateTime.Now.AddDays(symbolItem.pastDataLength), DateTime.Now, limit).Result.ToList();
+                tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Hours_1, DateTime.Now.AddDays(symbolItem.pastDataLength), DateTime.Now, limit).Result.ToList();
 
                 if (tempCandlestick != null && tempCandlestick.Count() > 0)
                     candlestick.AddRange(tempCandlestick);
