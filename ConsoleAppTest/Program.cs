@@ -15,7 +15,7 @@ namespace ConsoleAppTest
 
             await GenerateOTTLine.GenerateOTT(@"COMMON\");
 
-            await BinanceTrade.TradeAsync(@"SEMIR\");
+            //await BinanceTrade.TradeAsync(@"SEMIR\");
 
             DateTime endTime = DateTime.Now;
 
