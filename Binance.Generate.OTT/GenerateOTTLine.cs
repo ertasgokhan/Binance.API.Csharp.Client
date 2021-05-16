@@ -86,13 +86,13 @@ namespace Binance.Generate.OTT
                 List<Candlestick> candlestick = new List<Candlestick>();
                 List<Candlestick> tempCandlestick = new List<Candlestick>();
 
-                for (int i = symbolItem.pastDataLength; i < 0; i++)
-                {
-                    tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Minutes_30, DateTime.Now.AddDays(i), DateTime.Now.AddDays(i + 1), limit).Result.ToList();
+                //for (int i = symbolItem.pastDataLength; i < 0; i++)
+                //{
+                tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Minutes_30, DateTime.Now.AddDays(symbolItem.pastDataLength), DateTime.Now, limit).Result.ToList();
 
-                    if (tempCandlestick != null && tempCandlestick.Count() > 0)
-                        candlestick.AddRange(tempCandlestick);
-                }
+                if (tempCandlestick != null && tempCandlestick.Count() > 0)
+                    candlestick.AddRange(tempCandlestick);
+                //}
 
                 if (File.Exists(filepath))
                     File.Delete(filepath);
