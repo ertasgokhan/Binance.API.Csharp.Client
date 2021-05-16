@@ -65,8 +65,8 @@ namespace Binance.OTT.Trade
                         tmp.buyRatio = Decimal.Parse(str.Split(';')[3]);
                         tmp.sellRatio = Decimal.Parse(str.Split(';')[4]);
                         tmp.buyTrendSwitch = str.Split(';')[5] == "0" ? false : true;
-                        tmp.buyTrendRatio = Decimal.Parse(str.Split(';')[6]);
-                        tmp.sellTrendRatio = Decimal.Parse(str.Split(';')[7]);
+                        tmp.reviewPeriodLength = int.Parse(str.Split(';')[6]);
+                        tmp.profitRatio = Decimal.Parse(str.Split(';')[7]);
                         tmp.depositRatio = decimal.Parse(str.Split(';')[8]);
                         tmp.priceRound = int.Parse(str.Split(';')[9]);
                         tmp.quantityRound = int.Parse(str.Split(';')[10]);
@@ -116,9 +116,9 @@ namespace Binance.OTT.Trade
 
                     using (StreamReader rd = File.OpenText(filepath))
                     {
-                        symbolCandleStick = rd.ReadToEnd();
+                        symbolCandleStick = rd.ReadToEnd().Trim();
                         lineNumber = symbolCandleStick.Split('\n').Length;
-                        lastCandleStickStr = symbolCandleStick.Split('\n')[lineNumber - 3];
+                        lastCandleStickStr = symbolCandleStick.Split('\n')[lineNumber - 2];
                         // Read Lines
                         lastCandleStick.Symbol = item.symbol;
                         lastCandleStick.OpenDateTime = DateTime.Parse(lastCandleStickStr.Split(';')[0]);
@@ -180,9 +180,9 @@ namespace Binance.OTT.Trade
 
                     using (StreamReader rd = File.OpenText(filepath))
                     {
-                        symbolCandleStick = rd.ReadToEnd();
+                        symbolCandleStick = rd.ReadToEnd().Trim();
                         lineNumber = symbolCandleStick.Split('\n').Length;
-                        lastCandleStickStr = symbolCandleStick.Split('\n')[lineNumber - 2];
+                        lastCandleStickStr = symbolCandleStick.Split('\n')[lineNumber - 1];
                         // Read Lines
                         lastCandleStick.Symbol = item.symbol;
                         lastCandleStick.OpenDateTime = DateTime.Parse(lastCandleStickStr.Split(';')[0]);
@@ -195,6 +195,67 @@ namespace Binance.OTT.Trade
                         lastCandleStick.BuySignal = lastCandleStickStr.Split(';')[7] == "0" ? false : true;
                         lastCandleStick.SellSignal = lastCandleStickStr.Split(';')[8] == "0" ? false : true;
                         candlestickList.Add(lastCandleStick);
+                    }
+                }
+
+                return candlestickList;
+            }
+            catch (Exception ex)
+            {
+                if (ex.InnerException != null)
+                {
+                    await SendTelegramMessageAsync(string.Format("Anlık mum verileri okunurken hata oluştu. Hata: {0}", ex.InnerException.Message));
+                    WriteLog(ex.InnerException.Message, account);
+                }
+                else
+                {
+                    await SendTelegramMessageAsync(string.Format("Anlık mum verileri okunurken hata oluştu. Hata: {0}", ex.Message));
+                    WriteLog(ex.Message, account);
+                }
+
+                return candlestickList;
+            }
+        }
+
+        private static async Task<List<Candlestick>> readReviewPeriodCandleSticksAsync(List<Symbol> symbols, string account)
+        {
+            List<Candlestick> candlestickList = new List<Candlestick>();
+
+            try
+            {
+                string filepath = string.Empty;
+                int lineNumber = 0;
+                string symbolCandleStick = string.Empty;
+                string reviewCandleStick = string.Empty;
+                Candlestick lastCandleStick = new Candlestick();
+
+                foreach (var item in symbols)
+                {
+                    filepath = @"C:\TradeBot\COMMON\" + item.symbol + ".txt";
+                    lineNumber = 0;
+                    symbolCandleStick = string.Empty;
+                    lastCandleStick = new Candlestick();
+
+                    if (item.reviewPeriodLength > 0 && item.profitRatio > 0)
+                    {
+                        using (StreamReader rd = File.OpenText(filepath))
+                        {
+                            symbolCandleStick = rd.ReadToEnd().Trim();
+                            lineNumber = symbolCandleStick.Split('\n').Length;
+                            reviewCandleStick = symbolCandleStick.Split('\n')[lineNumber - (item.reviewPeriodLength + 1)];
+                            // Read Lines
+                            lastCandleStick.Symbol = item.symbol;
+                            lastCandleStick.OpenDateTime = DateTime.Parse(reviewCandleStick.Split(';')[0]);
+                            lastCandleStick.Open = (decimal)(Decimal.Parse(reviewCandleStick.Split(';')[1]));
+                            lastCandleStick.High = (decimal)(Decimal.Parse(reviewCandleStick.Split(';')[2]));
+                            lastCandleStick.Low = (decimal)(Decimal.Parse(reviewCandleStick.Split(';')[3]));
+                            lastCandleStick.Close = (decimal)(Decimal.Parse(reviewCandleStick.Split(';')[4]));
+                            lastCandleStick.SupportLine = (decimal)(Decimal.Parse(reviewCandleStick.Split(';')[5]));
+                            lastCandleStick.OTTLine = (decimal)(Decimal.Parse(reviewCandleStick.Split(';')[6]));
+                            lastCandleStick.BuySignal = reviewCandleStick.Split(';')[7] == "0" ? false : true;
+                            lastCandleStick.SellSignal = reviewCandleStick.Split(';')[8] == "0" ? false : true;
+                            candlestickList.Add(lastCandleStick);
+                        }
                     }
                 }
 
@@ -302,6 +363,7 @@ namespace Binance.OTT.Trade
             {
                 // Get Acount Infos
                 var accountInfos = binanceClient.GetAccountInfo().Result;
+
                 var myCurrentSymbol = new Symbol();
 
                 tempBalances = accountInfos.Balances.Where(i => i.Locked != 0 || i.Free != 0).ToList();
@@ -538,6 +600,8 @@ namespace Binance.OTT.Trade
             await SendTelegramMessageAsync("****************** Trade İşlemi Başlamıştır ******************");
             List<Candlestick> myCandlesticks = new List<Candlestick>();
             List<Candlestick> myAvailableCandlesticks = new List<Candlestick>();
+            List<Candlestick> myReviewPeriodCandlesticks = new List<Candlestick>();
+            List<Candlestick> myCurrentReviewPeriodCandlesticks = new List<Candlestick>();
             List<Balance> myBalances = new List<Balance>();
             Order myCurrentOpenOrder = new Order();
             Order logOrderDetail = new Order();
@@ -556,6 +620,7 @@ namespace Binance.OTT.Trade
             decimal availableBuyAmount = 0;
             decimal currentCoinUSDTAmount = 0;
             decimal currentCoinAmount = 0;
+            decimal currentProfitRatio = 0;
             string bulkMessage = string.Empty;
             long orderId = 0;
             //long logOrderId = 0;
@@ -569,6 +634,7 @@ namespace Binance.OTT.Trade
             // Read CandleSticks
             myCandlesticks = await readLastCandleSticksAsync(mySembols, account);
             myAvailableCandlesticks = await readCurrentCandleSticksAsync(mySembols, account);
+            myReviewPeriodCandlesticks = await readReviewPeriodCandleSticksAsync(mySembols, account);
 
             // Calculate Available Amount
             await calculateAvailableAmountAsync(mySembols, myBalances, myAvailableCandlesticks, account);
@@ -598,6 +664,7 @@ namespace Binance.OTT.Trade
                     myCurrentLastTrade = myLastTrades.FirstOrDefault(i => i.Symbol == item.symbol.ToUpper());
                     myCurrentCandleStick = myCandlesticks.FirstOrDefault(i => i.Symbol == item.symbol);
                     myAvailableCurrentCandleStick = myAvailableCandlesticks.FirstOrDefault(i => i.Symbol == item.symbol);
+                    myCurrentReviewPeriodCandlesticks = myReviewPeriodCandlesticks.Where(i => i.Symbol == item.symbol).ToList();
                     logOrderDetail = null;
                     buyPrice = 0;
                     buyQuantity = 0;
@@ -607,6 +674,7 @@ namespace Binance.OTT.Trade
                     orderAmount = 0;
                     currentCoinUSDTAmount = 0;
                     currentCoinAmount = 0;
+                    currentProfitRatio = 0;
 
                     // Get Available Amount
                     availableBuyAmount = item.availableAmount;
@@ -668,7 +736,7 @@ namespace Binance.OTT.Trade
 
                         //WriteOpenOrderLog(item.symbol.ToUpper(), myNewOrder.OrderId.ToString(), account);
 
-                        bulkMessage += string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3} \n", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount);
+                        bulkMessage += string.Format("{0} için {1} adet ve {2} fiyattan ALIM emri girilmiştir. İşlem hacmi {3} \n \n", item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount);
                         WriteOrderLog(string.Format("{0};AL;{1};{2};{3};{4}", item.symbol.ToUpper(), buyQuantity, buyPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 2
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
@@ -679,7 +747,7 @@ namespace Binance.OTT.Trade
 
                         //WriteOpenOrderLog(item.symbol.ToUpper(), string.Empty, account);
 
-                        bulkMessage += string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1} \n", item.symbol.ToUpper(), orderId);
+                        bulkMessage += string.Format("{0} için SATIŞ emri İPTAL edilmiştir. Order Id: {1} \n \n", item.symbol.ToUpper(), orderId);
                         WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 3
                     else if (myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
@@ -705,12 +773,12 @@ namespace Binance.OTT.Trade
 
                             //WriteOpenOrderLog(item.symbol.ToUpper(), myNewOrder.OrderId.ToString(), account);
 
-                            bulkMessage += string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4} \n", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount);
+                            bulkMessage += string.Format("{0} için önceki verilen ALIM emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan ALIM emri güncellenmiştir. İşlem Hacmi {4} \n \n", item.symbol.ToUpper(), orderId, buyQuantity, buyPrice, orderAmount);
                             WriteOrderLog(string.Format("{0};AL;{1};{2};{3};{4}", item.symbol.ToUpper(), buyQuantity, buyPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                         }
                         else
                         {
-                            bulkMessage += string.Format("{0} için mevcuttaki ALIM emri GÜNCELLENMEMİŞTİR. Mevcut ALIM fiyatı {1} \n", item.symbol.ToUpper(), buyPrice);
+                            bulkMessage += string.Format("{0} için mevcuttaki ALIM emri GÜNCELLENMEMİŞTİR. Mevcut ALIM fiyatı {1} \n \n", item.symbol.ToUpper(), buyPrice);
                         }
                     } // Case 4
                     else if ((myCurrentLastTrade != null && myCurrentLastTrade.Side == "BUY") && myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && (myCurrentCoinBalance != null && myCurrentCoinBalance.Free > 0))
@@ -727,7 +795,7 @@ namespace Binance.OTT.Trade
 
                         //WriteOpenOrderLog(item.symbol.ToUpper(), myNewOrder.OrderId.ToString(), account);
 
-                        bulkMessage += string.Format("{0} için {1} adet ve {2} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {3} \n", item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount);
+                        bulkMessage += string.Format("{0} için {1} adet ve {2} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {3} \n \n", item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount);
                         WriteOrderLog(string.Format("{0};SAT;{1};{2};{3};{4}", item.symbol.ToUpper(), sellQuantity, sellPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 5
                     else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "BUY"))
@@ -738,7 +806,7 @@ namespace Binance.OTT.Trade
 
                         //WriteOpenOrderLog(item.symbol.ToUpper(), string.Empty, account);
 
-                        bulkMessage += string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1} \n", item.symbol.ToUpper(), orderId);
+                        bulkMessage += string.Format("{0} için ALIM emri İPTAL edilmiştir. Order Id: {1} \n \n", item.symbol.ToUpper(), orderId);
                         WriteOrderLog(string.Format("{0};IPTAL;{1};{2};{3};{4}", item.symbol.ToUpper(), myCurrentOpenOrder.OrigQty, myCurrentOpenOrder.Price, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     } // Case 6
                     else if (myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && (myCurrentOpenOrder != null && myCurrentOpenOrder.Side == "SELL"))
@@ -763,17 +831,41 @@ namespace Binance.OTT.Trade
 
                             //WriteOpenOrderLog(item.symbol.ToUpper(), myNewOrder.OrderId.ToString(), account);
 
-                            bulkMessage += string.Format("{0} için önceki verilen SATIŞ emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan SATIŞ emri güncellenmiştir. İşlem Hacmi {4} \n", item.symbol.ToUpper(), orderId, sellQuantity, sellPrice, orderAmount);
+                            bulkMessage += string.Format("{0} için önceki verilen SATIŞ emri İPTAL edilmiştir. (Order Id: {1}) - {2} adet ve {3} fiyattan SATIŞ emri güncellenmiştir. İşlem Hacmi {4} \n \n", item.symbol.ToUpper(), orderId, sellQuantity, sellPrice, orderAmount);
                             WriteOrderLog(string.Format("{0};SAT;{1};{2};{3};{4}", item.symbol.ToUpper(), sellQuantity, sellPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                         }
                         else
                         {
-                            bulkMessage += string.Format("{0} için mevcuttaki SATIŞ emri GÜNCELLENMEMİŞTİR. Mevcut SATIŞ fiyatı {1} \n", item.symbol.ToUpper(), sellPrice);
+                            bulkMessage += string.Format("{0} için mevcuttaki SATIŞ emri GÜNCELLENMEMİŞTİR. Mevcut SATIŞ fiyatı {1} \n \n", item.symbol.ToUpper(), sellPrice);
+                        }
+                    } // Case 7
+                    else if ((item.reviewPeriodLength > 0 && item.profitRatio > 0) && myCurrentCandleStick.SupportLine > myCurrentCandleStick.OTTLine && (myCurrentLastTrade != null || myCurrentLastTrade.Side == "BUY") && myCurrentOpenOrder == null)
+                    {
+                        Candlestick firstCandlestick = myCurrentReviewPeriodCandlesticks.FirstOrDefault();
+
+                        if (firstCandlestick != null && firstCandlestick.Open > myCurrentLastTrade.Price)
+                            currentProfitRatio = (myCurrentCandleStick.Close / firstCandlestick.Open) - 1;
+                        else
+                            currentProfitRatio = (myCurrentCandleStick.Close / myCurrentLastTrade.Price) - 1;
+
+                        if (currentProfitRatio >= item.profitRatio)
+                        {
+                            sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
+
+                            sellQuantity = Math.Round(myCurrentCoinBalance.Free - (decimal)Math.Pow(10, (item.quantityRound * -1)), item.quantityRound);
+
+                            myNewOrder = await binanceClient.PostNewOrder(item.symbol, sellQuantity, sellPrice, OrderSide.SELL);
+                            orderAmount = Math.Round(sellQuantity * sellPrice, item.priceRound);
+
+                            //WriteOpenOrderLog(item.symbol.ToUpper(), myNewOrder.OrderId.ToString(), account);
+
+                            bulkMessage += string.Format("Son 4 Periyot için gerçekleşen artış oranı: {0}% \n{1} için minimum kar oranına ulaşılmış olup {2} adet ve {3} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {4} \n \n", Math.Round(currentProfitRatio * 100, 2), item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount);
+                            WriteOrderLog(string.Format("{0};SAT;{1};{2};{3};{4}", item.symbol.ToUpper(), sellQuantity, sellPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                         }
                     }
                     else
                     {
-                        bulkMessage += string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır \n", item.symbol.ToUpper());
+                        bulkMessage += string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır \n \n", item.symbol.ToUpper());
                     }
                 }
 

@@ -22,9 +22,9 @@ namespace Binance.OTT.Trade
 
         public bool buyTrendSwitch { get; set; }
 
-        public decimal buyTrendRatio { get; set; }
+        public int reviewPeriodLength { get; set; }
 
-        public decimal sellTrendRatio { get; set; }
+        public decimal profitRatio { get; set; }
 
         public decimal depositRatio { get; set; }
 
