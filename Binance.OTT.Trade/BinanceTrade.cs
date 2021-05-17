@@ -862,6 +862,10 @@ namespace Binance.OTT.Trade
                             bulkMessage += string.Format("Son 4 Periyot için gerçekleşen artış oranı: {0}% \n{1} için minimum kar oranına ulaşılmış olup {2} adet ve {3} fiyattan SATIŞ emri girilmiştir. İşlem hacmi {4} \n \n", Math.Round(currentProfitRatio * 100, 2), item.symbol.ToUpper(), sellQuantity, sellPrice, orderAmount);
                             WriteOrderLog(string.Format("{0};SAT;{1};{2};{3};{4}", item.symbol.ToUpper(), sellQuantity, sellPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                         }
+                        else
+                        {
+                            bulkMessage += string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır \n \n", item.symbol.ToUpper());
+                        }
                     }
                     else
                     {
