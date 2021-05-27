@@ -71,6 +71,7 @@ namespace Binance.OTT.Trade
                         tmp.priceRound = int.Parse(str.Split(';')[9]);
                         tmp.quantityRound = int.Parse(str.Split(';')[10]);
                         tmp.symbolCoin = str.Split(';')[11];
+                        tmp.rsiSupport = int.Parse(str.Split(';')[13]);
                         symbolsList.Add(tmp);
                     }
                 }
@@ -130,6 +131,7 @@ namespace Binance.OTT.Trade
                         lastCandleStick.OTTLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[6]));
                         lastCandleStick.BuySignal = lastCandleStickStr.Split(';')[7] == "0" ? false : true;
                         lastCandleStick.SellSignal = lastCandleStickStr.Split(';')[8] == "0" ? false : true;
+                        lastCandleStick.rsi = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[9]));
                         candlestickList.Add(lastCandleStick);
 
                         if (lastCandleStick.BuySignal)
@@ -194,6 +196,7 @@ namespace Binance.OTT.Trade
                         lastCandleStick.OTTLine = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[6]));
                         lastCandleStick.BuySignal = lastCandleStickStr.Split(';')[7] == "0" ? false : true;
                         lastCandleStick.SellSignal = lastCandleStickStr.Split(';')[8] == "0" ? false : true;
+                        lastCandleStick.rsi = (decimal)(Decimal.Parse(lastCandleStickStr.Split(';')[9]));
                         candlestickList.Add(lastCandleStick);
                     }
                 }
@@ -850,7 +853,7 @@ namespace Binance.OTT.Trade
 
                         if (currentProfitRatio >= item.profitRatio)
                         {
-                            sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.002M), item.priceRound);
+                            sellPrice = Math.Round(myAvailableCurrentCandleStick.Close - (myAvailableCurrentCandleStick.Close * 0.005M), item.priceRound);
 
                             sellQuantity = Math.Round(myCurrentCoinBalance.Free - (decimal)Math.Pow(10, (item.quantityRound * -1)), item.quantityRound);
 
@@ -866,6 +869,20 @@ namespace Binance.OTT.Trade
                         {
                             bulkMessage += string.Format("{0} için bu periyotta herhangi bir işlem yapılmamıştır \n \n", item.symbol.ToUpper());
                         }
+                    } // Case 8 
+                    else if (item.rsiSupport > 0 && myCurrentCandleStick.rsi < item.rsiSupport && myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && (myCurrentLastTrade != null && myCurrentLastTrade.Side == "SELL"))
+                    {
+                        buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.005M), item.priceRound);
+
+                        buyQuantity = Math.Round((availableBuyAmount / buyPrice), item.quantityRound);
+
+                        myNewOrder = await binanceClient.PostNewOrder(item.symbol, buyQuantity, buyPrice, OrderSide.BUY);
+                        orderAmount = Math.Round(buyQuantity * buyPrice, item.priceRound);
+
+                        //WriteOpenOrderLog(item.symbol.ToUpper(), myNewOrder.OrderId.ToString(), account);
+
+                        bulkMessage += string.Format("RSI değeri: {0} \n{1} RSI değeri desteğin altında kalmış olup {2} adet ve {3} fiyattan ALIM emri girilmiştir. İşlem hacmi {4} \n \n", myCurrentCandleStick.rsi, item.symbol.ToUpper(), buyQuantity, buyPrice, orderAmount);
+                        WriteOrderLog(string.Format("{0};AL;{1};{2};{3};{4}", item.symbol.ToUpper(), buyQuantity, buyPrice, DateTime.Now.ToShortDateString(), DateTime.Now.ToShortTimeString()), account);
                     }
                     else
                     {

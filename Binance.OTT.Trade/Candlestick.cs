@@ -25,5 +25,8 @@ namespace Binance.OTT.Trade
         public bool BuySignal { get; set; }
 
         public bool SellSignal { get; set; }
+
+        public Decimal rsi { get; set; }
+
     }
 }

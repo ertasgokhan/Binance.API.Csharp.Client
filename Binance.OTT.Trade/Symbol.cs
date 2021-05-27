@@ -33,5 +33,8 @@ namespace Binance.OTT.Trade
         public int quantityRound { get; set; }
 
         public int priceRound { get; set; }
+
+        public int rsiSupport { get; set; }
+
     }
 }
