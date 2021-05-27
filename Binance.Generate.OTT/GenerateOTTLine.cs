@@ -357,6 +357,7 @@ namespace Binance.Generate.OTT
         public static async Task GenerateOTT(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
+            message = string.Empty;
 
             // Read Environment Variables
             readEnvironmentVariables(account);
