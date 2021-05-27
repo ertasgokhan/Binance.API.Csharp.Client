@@ -22,6 +22,8 @@ namespace Binance.Generate.OTT
         private static ApiClient apiClient = new ApiClient("", "");
         private static BinanceClient binanceClient = new BinanceClient(apiClient);
         private static TelegramBotClient botClient;
+        private static string message = string.Empty;
+
 
         private static async Task SendTelegramMessageAsync(string message)
         {
@@ -43,6 +45,7 @@ namespace Binance.Generate.OTT
                     tmp.length = int.Parse(str.Split(';')[1]);
                     tmp.percent = Decimal.Parse(str.Split(';')[2]);
                     tmp.pastDataLength = int.Parse(str.Split(';')[5]);
+                    tmp.rsiPeriod = int.Parse(str.Split(';')[12]);
                     symbolsList.Add(tmp);
                 }
             }
@@ -73,49 +76,10 @@ namespace Binance.Generate.OTT
             botClient = new TelegramBotClient(environmentVariables.z);
         }
 
-        private static async Task GetForOnePairAsync(Symbol symbolItem, string account)
-        {
-            try
-            {
-                string symbol = symbolItem.symbol;
-                int Length = symbolItem.length;
-                decimal Percent = symbolItem.percent;
-
-                string filepath = @"C:\TradeBot\" + account + symbol + ".txt";
-                string OTTLines = string.Empty;
-                List<Candlestick> candlestick = new List<Candlestick>();
-                List<Candlestick> tempCandlestick = new List<Candlestick>();
-
-                //for (int i = symbolItem.pastDataLength; i < 0; i++)
-                //{
-                tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Minutes_30, DateTime.Now.AddDays(symbolItem.pastDataLength), DateTime.Now, limit).Result.ToList();
-
-                if (tempCandlestick != null && tempCandlestick.Count() > 0)
-                    candlestick.AddRange(tempCandlestick);
-                //}
-
-                if (File.Exists(filepath))
-                    File.Delete(filepath);
-
-                using (StreamWriter sw = File.CreateText(filepath))
-                {
-                    OTTLines = ReturnOTT(candlestick, Length, Percent);
-                    sw.WriteLine(OTTLines);
-                }
-
-                await SendTelegramMessageAsync(string.Format("{0} için mum verileri başarıyla okunmuştur", symbol.ToUpper()));
-            }
-            catch (Exception ex)
-            {
-                await SendTelegramMessageAsync(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ex.Message));
-                WriteLog(((System.IO.FileLoadException)ex.InnerException).Message, account);
-            }
-        }
-
-        private static string ReturnOTT(List<Candlestick> candlestick, int length, decimal percent)
+        private static string ReturnOTT(List<Candlestick> candlestick, int length, decimal percent, int rsiPeriod)
         {
             string OTTValues = string.Empty;
-
+            decimal alphaRsi = (decimal)1 / rsiPeriod;
             Candlestick[] CandlestickArr = new Candlestick[candlestick.Count()];
             OTT[] OTTArr = new OTT[candlestick.Count()];
             CandlestickArr = candlestick.ToArray();
@@ -123,6 +87,7 @@ namespace Binance.Generate.OTT
             bool SellSignal = false;
             int runTimePeriod = candlestick.Count(); // 500
             decimal valpha = (decimal)2 / (length + 1);
+            RSI[] rsi = new RSI[candlestick.Count()];
 
             for (int i = 0; i < runTimePeriod; i++)
             {
@@ -145,8 +110,13 @@ namespace Binance.Generate.OTT
                     OTTArr[i].SupportLine = 0;
                     BuySignal = false;
                     SellSignal = false;
+                    rsi[i] = new RSI();
+                    rsi[i].avgGain = 0;
+                    rsi[i].avgLosses = 0;
+                    rsi[i].relativeStrength = 0;
+                    rsi[i].rsi = 0;
 
-                    OTTValues = String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, 0, 0, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
+                    OTTValues = String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8};{9}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, 0, 0, BuySignal ? "1" : "0", SellSignal ? "1" : "0", rsi[i].rsi);
                 }
                 else
                 {
@@ -240,7 +210,38 @@ namespace Binance.Generate.OTT
                             SellSignal = false;
                     }
 
-                    OTTValues = OTTValues + "\n" + String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, OTTArr[i].SupportLine, OTTArr[i].OTTLine, BuySignal ? "1" : "0", SellSignal ? "1" : "0");
+                    // Calculate RSI
+                    rsi[i] = new RSI() { avgGain = 0, avgLosses = 0, relativeStrength = 0, rsi = 0 };
+                    if (i < (rsiPeriod - 1))
+                    {
+                        rsi[i].avgGain = 0;
+                        rsi[i].avgLosses = 0;
+                        rsi[i].relativeStrength = 0;
+                        rsi[i].rsi = 0;
+                    }
+                    else
+                    {
+                        if (i == (rsiPeriod - 1))
+                        {
+                            for (int j = 0; j < (rsiPeriod - 1); j++)
+                            {
+                                rsi[i].avgGain = rsi[i].avgGain + OTTArr[i - j].vud1;
+                                rsi[i].avgLosses = rsi[i].avgLosses + OTTArr[i - j].vdd1;
+                            }
+
+                            rsi[i].avgGain = rsi[i].avgGain / rsiPeriod;
+                            rsi[i].avgLosses = rsi[i].avgLosses / rsiPeriod;
+                        }
+                        else
+                        {
+                            rsi[i].avgGain = (OTTArr[i].vud1 * alphaRsi) + ((1 - alphaRsi) * rsi[i - 1].avgGain);
+                            rsi[i].avgLosses = (OTTArr[i].vdd1 * alphaRsi) + ((1 - alphaRsi) * rsi[i - 1].avgLosses);
+                            rsi[i].relativeStrength = rsi[i].avgGain / rsi[i].avgLosses;
+                            rsi[i].rsi = Math.Round((100 - (100 / (1 + rsi[i].relativeStrength))), 2);
+                        }
+                    }
+
+                    OTTValues = OTTValues + "\n" + String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8};{9}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, OTTArr[i].SupportLine, OTTArr[i].OTTLine, BuySignal ? "1" : "0", SellSignal ? "1" : "0", rsi[i].rsi);
                 }
             }
 
@@ -313,6 +314,46 @@ namespace Binance.Generate.OTT
             }
         }
 
+        private static async Task GetForOnePairAsync(Symbol symbolItem, string account)
+        {
+            try
+            {
+                string symbol = symbolItem.symbol;
+                int Length = symbolItem.length;
+                decimal Percent = symbolItem.percent;
+                int rsiPeriod = symbolItem.rsiPeriod;
+
+                string filepath = @"C:\TradeBot\" + account + symbol + ".txt";
+                string OTTLines = string.Empty;
+                List<Candlestick> candlestick = new List<Candlestick>();
+                List<Candlestick> tempCandlestick = new List<Candlestick>();
+
+                //for (int i = symbolItem.pastDataLength; i < 0; i++)
+                //{
+                tempCandlestick = binanceClient.GetCandleSticks(symbol, TimeInterval.Minutes_30, DateTime.Now.AddDays(symbolItem.pastDataLength), DateTime.Now, limit).Result.ToList();
+
+                if (tempCandlestick != null && tempCandlestick.Count() > 0)
+                    candlestick.AddRange(tempCandlestick);
+                //}
+
+                if (File.Exists(filepath))
+                    File.Delete(filepath);
+
+                using (StreamWriter sw = File.CreateText(filepath))
+                {
+                    OTTLines = ReturnOTT(candlestick, Length, Percent, rsiPeriod);
+                    sw.WriteLine(OTTLines);
+                }
+
+                message += string.Format("{0} için mum verileri başarıyla okunmuştur \n \n", symbol.ToUpper());
+            }
+            catch (Exception ex)
+            {
+                await SendTelegramMessageAsync(string.Format("{0} için mum verileri okunma sırasında hata alınmıştır. {1}", symbolItem.symbol.ToUpper(), ex.Message));
+                WriteLog(((System.IO.FileLoadException)ex.InnerException).Message, account);
+            }
+        }
+
         public static async Task GenerateOTT(string account)
         {
             Thread.CurrentThread.CurrentCulture = new CultureInfo("tr-TR");
@@ -323,11 +364,14 @@ namespace Binance.Generate.OTT
             // Read Symbols
             List<Symbol> symbolsList = await readSymbolsAsync(account);
 
-            // Generate OTT Lines
+            //Generate OTT Lines
             Parallel.ForEach(symbolsList, async item =>
             {
                 await GetForOnePairAsync(item, account);
             });
+
+            if (!string.IsNullOrEmpty(message))
+                await SendTelegramMessageAsync(message);
         }
     }
 }
