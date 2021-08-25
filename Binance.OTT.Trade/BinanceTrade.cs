@@ -872,7 +872,7 @@ namespace Binance.OTT.Trade
                     } // Case 8 
                     else if (item.rsiSupport > 0 && myCurrentCandleStick.rsi < item.rsiSupport && myCurrentCandleStick.SupportLine < myCurrentCandleStick.OTTLine && myCurrentOpenOrder == null && (myCurrentLastTrade != null && myCurrentLastTrade.Side == "SELL"))
                     {
-                        buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * 0.005M), item.priceRound);
+                        buyPrice = Math.Round(myAvailableCurrentCandleStick.Close + (myAvailableCurrentCandleStick.Close * -0.01M), item.priceRound);
 
                         buyQuantity = Math.Round((availableBuyAmount / buyPrice), item.quantityRound);
 
