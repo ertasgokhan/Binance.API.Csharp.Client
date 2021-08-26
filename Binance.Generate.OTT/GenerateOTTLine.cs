@@ -116,7 +116,7 @@ namespace Binance.Generate.OTT
                     rsi[i].relativeStrength = 0;
                     rsi[i].rsi = 0;
 
-                    OTTValues = String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8};{9}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, 0, 0, BuySignal ? "1" : "0", SellSignal ? "1" : "0", rsi[i].rsi);
+                    OTTValues = String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8};{9};{10}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, 0, 0, BuySignal ? "1" : "0", SellSignal ? "1" : "0", rsi[i].rsi, CandlestickArr[i].Volume);
                 }
                 else
                 {
@@ -241,7 +241,7 @@ namespace Binance.Generate.OTT
                         }
                     }
 
-                    OTTValues = OTTValues + "\n" + String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8};{9}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, OTTArr[i].SupportLine, OTTArr[i].OTTLine, BuySignal ? "1" : "0", SellSignal ? "1" : "0", rsi[i].rsi);
+                    OTTValues = OTTValues + "\n" + String.Format("{0};{1};{2};{3};{4};{5};{6};{7};{8};{9};{10}", CandlestickArr[i].OpenDateTime, CandlestickArr[i].Open, CandlestickArr[i].High, CandlestickArr[i].Low, CandlestickArr[i].Close, OTTArr[i].SupportLine, OTTArr[i].OTTLine, BuySignal ? "1" : "0", SellSignal ? "1" : "0", rsi[i].rsi, CandlestickArr[i].Volume);
                 }
             }
 
@@ -366,10 +366,14 @@ namespace Binance.Generate.OTT
             List<Symbol> symbolsList = await readSymbolsAsync(account);
 
             //Generate OTT Lines
-            Parallel.ForEach(symbolsList, async item =>
+            //Parallel.ForEach(symbolsList, async item =>
+            //{
+            foreach (var item in symbolsList)
             {
                 await GetForOnePairAsync(item, account);
-            });
+
+            }
+            //});
 
             if (!string.IsNullOrEmpty(message))
                 await SendTelegramMessageAsync(message);
